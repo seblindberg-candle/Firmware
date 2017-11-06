@@ -4,51 +4,21 @@
 /* Includes ----------------------------------------------------------------- */
 
 #include <compiler.h>
-
+#include <fifo.h>
+#include <drivers/usart/device.h>
 
 /* Constants -------------------------------------+-------------------------- */
 
-#define USART__BAUDCTRL(bscale, bsel)             \
-                                    (uint16_t)((bscale << 12) | (bsel & 0x0FFF))
 
-#define USART__CLK2X_bm                           (1 << 2)
 
 /* Data Types --------------------------------------------------------------- */
 
-typedef uint32_t usart__baud_rate_t;
-typedef uint16_t usart__bsel_t;
-typedef int8_t   usart__bscale_t;
+typedef struct {
+  USART_t * const device;
+  fifo_t  w_fifo;
+  fifo_t  r_fifo;
+} usart_t;
 
-typedef enum {
-  USART__NO_REMAP = 0,
-  USART__REMAP    = 1
-} usart__remap_t;
-
-typedef enum {
-  USART__CLK1X = 0,
-  USART__CLK2X = 1
-} usart__clk_t;
-
-typedef enum {
-  USART__RW            = USART_TXEN_bm | USART_RXEN_bm,
-  USART__READ_ONLY     = USART_RXEN_bm,
-  USART__WRITE_ONLY    = USART_TXEN_bm,
-  USART__RW_X2         = USART_TXEN_bm | USART_RXEN_bm | USART_CLK2X_bm,
-  USART__READ_ONLY_X2  = USART_RXEN_bm | USART_CLK2X_bm,
-  USART__WRITE_ONLY_X2 = USART_TXEN_bm | USART_CLK2X_bm,
-} usart__config_t;
-
-typedef enum {
-#if F_CPU == 32000000
-  USART__B9600   = USART__BAUDCTRL(4, 12),
-  USART__B57600  = USART__BAUDCTRL(-2, 135),
-  USART__B115200 = USART__BAUDCTRL(-3, 131),
-#elif F_CPU == 2000000
-  USART__B57600  = USART__BAUDCTRL(-6, 75),
-#else
-#warning No baud rates defined for this clock frequency
-#endif
-} usart__baudctrl_t;
 
 /* Global Variables --------------------------------------------------------- */
 
@@ -58,38 +28,46 @@ typedef enum {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  usart__init(USART_t *module, usart__baudctrl_t baudctrl,
-              usart__config_t conf);
+  usart__ctor(usart_t *usart, USART_t *device, void *buffer, size_t buffer_len);
+  
+static inline void
+  usart__rxc_isr(usart_t *usart);
+  
+static inline void
+  usart__dre_isr(usart_t *usart);
 
 void
-  usart__map_io(USART_t *module, usart__remap_t remap);
-
-void
-  usart__write(USART_t *module, const void *data, size_t data_len);
+  usart__write(usart_t *usart, const void *src, size_t data_len);
   
 void
-  usart__read(USART_t *module, void *data, size_t data_len);
+  usart__write_fast(usart_t *usart, uint8_t data);
   
-static inline void
-  usart__wait_dr_ready(USART_t *module);
+void
+  usart__read(usart_t *usart, void *dest, size_t data_len);
   
-static inline void
-  usart__wait_rx_ready(USART_t *module);
+uint8_t
+  usart__read_fast(usart_t *usart);
   
-static inline void
-  usart__wait_tx_ready(USART_t *module);
-  
+// static inline void
+//   usart__wait_dr_ready(USART_t *device);
+//
+// static inline void
+//   usart__wait_rx_ready(USART_t *device);
+//
+// static inline void
+//   usart__wait_tx_ready(USART_t *device);
+//
 static inline bool_t
-  usart__is_read_enabled(USART_t *module);
+  usart__is_read_enabled(const usart_t *usart);
 
 static inline bool_t
-  usart__is_write_enabled(USART_t *module);
-
-static inline void
-  usart__write_fast(USART_t *module, const uint8_t data);
-  
-static inline uint8_t
-  usart__read_fast(USART_t *module);
+  usart__is_write_enabled(const usart_t *usart);
+//
+// static inline void
+//   usart__write_fast(USART_t *device, const uint8_t data);
+//
+// static inline uint8_t
+//   usart__read_fast(USART_t *device);
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -99,49 +77,108 @@ static inline uint8_t
 /* Inline Function Definitions ---------------------------------------------- */
 
 
-void
-usart__wait_dr_ready(USART_t *module)
-{
-  while (!(module->STATUS & USART_DREIF_bm)) ;
-}
+// void
+// usart__wait_dr_ready(USART_t *device)
+// {
+//   while (!(device->STATUS & USART_DREIF_bm)) ;
+// }
+//
+// void
+// usart__wait_rx_ready(USART_t *device)
+// {
+//   while (!(device->STATUS & USART_RXCIF_bm)) ;
+// }
+//
+// void
+// usart__wait_tx_ready(USART_t *device)
+// {
+//   while (!(device->STATUS & USART_TXCIF_bm)) ;
+// }
+//
 
-void
-usart__wait_rx_ready(USART_t *module)
+bool_t
+usart__is_read_enabled(const usart_t *usart)
 {
-  while (!(module->STATUS & USART_RXCIF_bm)) ;
-}
-
-void
-usart__wait_tx_ready(USART_t *module)
-{
-  while (!(module->STATUS & USART_TXCIF_bm)) ;
+  return usart__device__is_read_enabled(usart->device);
 }
 
 bool_t
-usart__is_read_enabled(USART_t *module)
+usart__is_write_enabled(const usart_t *usart)
 {
-  return (module->CTRLB & USART_RXEN_bm);
+  return usart__device__is_write_enabled(usart->device);
 }
 
-bool_t
-usart__is_write_enabled(USART_t *module)
-{
-  return (module->CTRLB & USART_TXEN_bm);
-}
-
+/* Receive Interrupt Service Routine
+ *
+ */
 void
-usart__write_fast(USART_t *module, const uint8_t data)
+usart__rxc_isr(usart_t *usart)
 {
-  usart__wait_dr_ready(module);
-  module->DATA = data;
+  uint8_t data;
+  size_t  res;
+
+  assert(usart != NULL);
+  assert(usart__is_read_enabled(usart));
+  assert(usart->device->STATUS & USART_RXCIF_bm);
+
+  /* Reading from the DATA register clears the interrupt */
+  data = usart->device->DATA;
+
+  /* TODO: replace with fifo__write_force */
+  if (fifo__is_full(&usart->r_fifo)) {
+    uint8_t tmp;
+    fifo__read(&usart->r_fifo, &tmp, 1);
+  }
+
+  /* Insert the received byte into the buffer */
+  res = fifo__write(&usart->r_fifo, &data, 1);
+  assert(res == 1);
+}
+
+/* Data Ready Interrupt Service Routine
+ *
+ * From the manual:
+ *   When interrupt-driven data transmission is used, the Data Register Empty
+ *   interrupt routine must either write new data to DATA in order to clear
+ *   DREIF or disable the Data Register Empty interrupt. If not, a new interrupt
+ *   will occur directly after the return from the current interrupt.
+ */
+void
+usart__dre_isr(usart_t *usart)
+{
+  assert(usart != NULL);
+  assert(usart__is_write_enabled(usart));
+  assert(usart->device->STATUS & USART_DREIF_bm);
+
+  if (fifo__is_empty(&usart->w_fifo)) {
+    /* Disable the interrupt */
+    usart->device->CTRLA &= ~USART_DREINTLVL_HI_gc;
+  } else {
+    size_t  res;
+    uint8_t data;
+
+    res = fifo__read(&usart->w_fifo, &data, 1);
+    assert(res == 1);
+
+    usart->device->DATA = data;
+  }
 }
 
 
-uint8_t
-usart__read_fast(USART_t *module)
-{
-  usart__wait_rx_ready(module);
-  return module->DATA;
-}
+//
+// void
+// usart__write_fast(USART_t *device, const uint8_t data)
+// {
+//   usart__wait_dr_ready(device);
+//   device->DATA = data;
+// }
+//
+//
+// uint8_t
+// usart__read_fast(USART_t *device)
+// {
+//   usart__wait_rx_ready(device);
+//   return device->DATA;
+// }
 
 #endif /* USART_H */

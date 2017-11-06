@@ -9,6 +9,24 @@
 
 /* Constants -------------------------------------+-------------------------- */
 
+#define MMC__CS_PORT                              PORTC
+#define MMC__CS_PIN_bm                            PIN4_bm
+#define MMC__HOLD_PORT                            PORTC
+#define MMC__HOLD_PIN_bm                          PIN0_bm
+#define MMC__WP_PORT                              PORTC
+#define MMC__WP_PIN_bm                            PIN5_bm
+
+#define MMC__S25FL032P_MANUFACTURER_ID            (0x01)
+#define MMC__S25FL032P_DEVICE_ID                  (0x15)
+
+#define MMC__STATUS_WIP_bm                        (1 << 0)
+#define MMC__STATUS_WEL_bm                        (1 << 1)
+#define MMC__STATUS_E_ERR_bm                      (1 << 5)
+#define MMC__STATUS_P_ERR_bm                      (1 << 6)
+#define MMC__STATUS_SRWD_bm                       (1 << 7)
+
+#define MMC__PAGE_SIZE                            (256)
+
 /* Command table */
 typedef enum {
   /* Read */
@@ -45,28 +63,36 @@ typedef enum {
   MMC__CMD_OTPR      = 0x4B  /* Read data in the OTP memory space */
 } mmc__cmd_t;
 
-#define MMC__S25FL032P_MANUFACTURER_ID            0x01
-#define MMC__S25FL032P_DEVICE_ID                  0x15
-
 
 /* Data Types --------------------------------------------------------------- */
 
+/* Main mmc data type.
+ */
 typedef struct {
-  USART_t *module;
-  uspi__chip_select cs;
+  uspi_t *interface;
 } mmc_t;
 
-typedef union {
-  uint8_t  addr[3];
-  // uint8_t  uint8;
-  // uint16_t uint16;
-} mmc__address_t;
+/* The full 24 bit address can be expressed with three
+ * different resolutions:
+ *
+ *   [xx xx xx] - address
+ *   [xx xx 00] - page
+ *   [xx 00 00] - sector
+ */
+typedef uint32_t mmc__address_t;
+typedef uint16_t mmc__page_t;
+typedef uint8_t  mmc__sector_t;
 
+/* Common return type for many mmc functions.
+ */
 typedef enum {
   MMC__OK                 = 0,
-  MMC__INVALID_CHIP_ID
+  MMC__INVALID_CHIP_ID,
+  MMC__BUSY,
 } mmc__result_t;
 
+/* Structure of the id field.
+ */
 typedef struct {
   uint8_t manufacurer_id;
   uint8_t device_id;
@@ -81,7 +107,7 @@ typedef struct {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  mmc__ctor(mmc_t *mmc, USART_t *module, uspi__chip_select cs);
+  mmc__ctor(mmc_t *mmc, uspi_t *interface);
   
 mmc__result_t
   mmc__verify(const mmc_t *mmc);
@@ -89,42 +115,80 @@ mmc__result_t
 uint8_t
   mmc__read_register(const mmc_t *mmc, mmc__cmd_t cmd);
   
+void
+  mmc__write_registers(const mmc_t *mmc, uint8_t status, uint8_t conf);
+  
+void
+  mmc__clear_status_register(const mmc_t *mmc);
+  
 mmc__result_t
   mmc__read_id(const mmc_t *mmc, mmc__id_t *id);
+  
+mmc__result_t
+  mmc__read(const mmc_t *mmc, mmc__address_t addr,
+            void *data, size_t data_len);
 
 mmc__result_t
-#if NDEBUG
-  mmc__program_page_fast(mmc_t *mmc, uint16_t page, uint8_t *src);
-#define mmc__program_page(mmc, page, src, len) \
-  mmc__program_page_fast(mmc, page, src)
-#else
-  mmc__program_page(mmc_t *mmc, uint16_t page, uint8_t *src, size_t src_len);
-#endif
+  mmc__program_page(const mmc_t *mmc, mmc__page_t page,
+                    const void *src, size_t src_len);
+           
+mmc__result_t
+  mmc__program(const mmc_t *mmc, mmc__address_t addr,
+               const void *src, size_t src_len);
+               
+mmc__result_t
+  mmc__erase(const mmc_t *mmc);
+
+uint8_t
+  mmc__wait_until_ready(const mmc_t *mmc);
 
 static inline uint8_t
   mmc__read_status_register(const mmc_t *mmc);
 
 static inline uint8_t
   mmc__read_configuration_register(const mmc_t *mmc);
+  
+static inline bool_t
+  mmc__is_busy(const mmc_t *mmc);
 
 
 /* Macros ----------------------------------------+--------+----------------- */
 
+#define MMC__PAGE_TO_ADDRESS(page)                ((mmc__address_t) page << 8)
+#define MMC__ADDRESS_TO_PAGE(addr)                ((mmc__page_t) addr >> 8)
 
+#define MMC__SECTOR_TO_ADDRESS(sect)              ((mmc__address_t) sect << 16)
+#define MMC__ADDRESS_TO_SECTOR(addr)              ((mmc__sector_t) addr >> 16)
+
+#define MMC__PAGE_TO_SECTOR(page)                 ((mmc__sector_t) page << 8)
+#define MMC__SECTOR_TO_PAGE(sect)                 ((mmc__page_t) addr >> 8)
 
 
 /* Inline Function Definitions ---------------------------------------------- */
 
+/* Read Status Register
+ */
 uint8_t
 mmc__read_status_register(const mmc_t *mmc)
 {
   return mmc__read_register(mmc, MMC__CMD_RDSR);
 }
 
+/* Read Configuration Register
+ */
 uint8_t
 mmc__read_configuration_register(const mmc_t *mmc)
 {
   return mmc__read_register(mmc, MMC__CMD_RCR);
 }
+
+bool_t
+mmc__is_busy(const mmc_t *mmc)
+{
+  uint8_t status = mmc__read_status_register(mmc);
+  return (status & MMC__STATUS_WIP_bm);
+}
+
+
 
 #endif /* MMC_H */

@@ -1,0 +1,3 @@
+[submodule "ext/fifo"]
+	path = ext/fifo
+	url = https://github.com/seblindberg/c-fifo

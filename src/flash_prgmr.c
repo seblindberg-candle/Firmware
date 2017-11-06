@@ -2,17 +2,15 @@
 
 /* Macros ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-typedef enum {
-  PARSER_STATE_INITIAL = 0,
-  PARSER_STATE_SIZE    = 1,
-  PARSER_STATE_DATA    = 2,
-  PARSER_STATE_ADDR    = 3  /* Must be last */
-} parser_state_t;
+
 
 /* Private Functions –––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-bool_t
-  parser(uint8_t c);
+static bool_t
+  parser(flash_prgmr_t *prmgr, uint8_t c);
+  
+static inline bool_t
+  write_buffer(flash_prgmr_t *prmgr);
 
 
 /* Global Variables ––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -23,7 +21,14 @@ bool_t
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 void
-flash_prgmr__feed(uint8_t byte)
+flash_prgmr__ctor(flash_prgmr_t *prgmr, const mmc_t *memory)
+{
+  prgmr->memory       = memory;
+  prgmr->parser_state = FLASH_PRGMR__PARSER_STATE_INITIAL;
+}
+
+void
+flash_prgmr__feed(flash_prgmr_t *prmgr, uint8_t byte)
 {
   
 }
@@ -34,9 +39,9 @@ flash_prgmr__feed(uint8_t byte)
  *   - xxxx (hex) is the target address
  */
 bool_t
-parser(uint8_t c)
+parser(flash_prgmr_t *prmgr, uint8_t c)
 {
-  static parser_state_t state = PARSER_STATE_INITIAL;
+  flash_prgmr__parser_state_t state = prmgr->parser_state;
   /* TODO: Place these in a flash_programmer struct */
   static uint16_t size;
   static uint8_t d;
@@ -45,30 +50,30 @@ parser(uint8_t c)
   switch (state) {
   /* We want to optimize for this state, since it is likely
      the most common one */
-  case PARSER_STATE_DATA:
+  case FLASH_PRGMR__PARSER_STATE_DATA:
     if (--size == 0) {
-      state = PARSER_STATE_INITIAL;
+      state = FLASH_PRGMR__PARSER_STATE_INITIAL;
     }
     return 1;
   /* Look for the characters 'W' (write) and 'E' (erase) */
-  case PARSER_STATE_INITIAL:
+  case FLASH_PRGMR__PARSER_STATE_INITIAL:
     if (c == 'W') {
-      state = PARSER_STATE_SIZE;
+      state = FLASH_PRGMR__PARSER_STATE_SIZE;
       size  = 0;
     } else if (c == 'E') {
       
     }
     break;
   /* Record the size, written in decimal, until we see an 'A' */
-  case PARSER_STATE_SIZE:
+  case FLASH_PRGMR__PARSER_STATE_SIZE:
     if (c >= '0' && c <= '9') {
       size = state * 10 + c - '0';
     } else if (c == 'A') {
       /* Check that size is valid [0,256] */
       
-      state = PARSER_STATE_ADDR + 4;
+      state = FLASH_PRGMR__PARSER_STATE_ADDR + 4;
     } else {
-      state = PARSER_STATE_INITIAL;
+      state = FLASH_PRGMR__PARSER_STATE_INITIAL;
     }
     break;
   /* Record the address, written in hex */
@@ -80,23 +85,29 @@ parser(uint8_t c)
     } else if (c >= 'A' && c <= 'F') {
       d = c - 'A' + 10;
     } else {
-      state = PARSER_STATE_INITIAL;
+      state = FLASH_PRGMR__PARSER_STATE_INITIAL;
       break;
     }
     
     /* TODO: Clean up this mess */
-    if ((state - PARSER_STATE_ADDR) % 2 == 0) {
-      addr[(state - PARSER_STATE_ADDR - 1) / 2] = d << 4;
+    if ((state - FLASH_PRGMR__PARSER_STATE_ADDR) % 2 == 0) {
+      addr[(state - FLASH_PRGMR__PARSER_STATE_ADDR - 1) / 2] = d << 4;
     } else {
-      addr[(state - PARSER_STATE_ADDR - 1) / 2] |= d;
+      addr[(state - FLASH_PRGMR__PARSER_STATE_ADDR - 1) / 2] |= d;
     }
     
-    if (--state == PARSER_STATE_ADDR) {
-      state = PARSER_STATE_DATA;
+    if (--state == FLASH_PRGMR__PARSER_STATE_ADDR) {
+      state = FLASH_PRGMR__PARSER_STATE_DATA;
       /* Now we guarantee that the size and address are both valid */
     }
   }
   
   return 0;
+}
+
+bool_t
+write_buffer(flash_prgmr_t *prmgr)
+{
+  return 1;
 }
 

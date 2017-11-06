@@ -13,12 +13,20 @@ FUSES      = -U fuse0:w:0xFF:m \
 
 INC_DIR = include
 SRC_DIR = src
+LIB_DIR = lib
 BLD_DIR = build
+
+CPPFLAGS += -I$(INC_DIR) -Iext/fifo/include
+CFLAGS   += -Wall
+LDFLAGS  += -L$(LIB_DIR)
+LDLIBS   += -lfifo
 
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER)
-COMPILE = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -I$(INC_DIR)
+CC = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+AR = avr-ar
+COMPILE = $(CC) $(CPPFLAGS)
 
 SRC_STRUCT := $(shell find $(SRC_DIR) -type d)
 # Mirror the structure in the build dir
@@ -31,6 +39,8 @@ OBJ    := $(patsubst $(SRC_DIR)/%.c, $(BLD_DIR)/%.o, $(SRC))
 #OBJ    := $(filter-out %/main.o, $(OBJ))
 
 OBJECTS = $(OBJ)
+
+HEADERS = $(shell find $(INC_DIR) -type f -name *.h)
 
 #$(info $(OBJ))
 
@@ -65,9 +75,18 @@ clean:
 $(BLD_DIR):
 	@$(foreach dir,$(DIR_STRUCT),mkdir -p $(dir);)
 
-# file targets:
-$(BLD_DIR)/main.elf: $(OBJECTS) | $(BLD_DIR)
-	$(COMPILE) -o $(BLD_DIR)/main.elf $(OBJECTS)
+# FILE TARGETS -----------------------------------------------------------------
+
+$(BLD_DIR)/main.elf: $(OBJECTS) $(HEADERS) | $(BLD_DIR)
+	$(COMPILE) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $@
+
+
+# BUILD EXTERNAL LIBRARIES -----------------------------------------------------
+
+$(LIB_DIR)/lib%.a:
+	$(MAKE) -C ext/$(@:$(LIB_DIR)/lib%.a=%) CC="$(CC)" AR="$(AR)" LIB_DIR=../../$(LIB_DIR)
+
+# MAIN HEX FILE ----------------------------------------------------------------
 
 $(BLD_DIR)/main.hex: $(BLD_DIR)/main.elf | $(BLD_DIR)
 	@rm -f $(BLD_DIR)/main.hex

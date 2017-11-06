@@ -9,14 +9,15 @@
 
 /* Constants -------------------------------------+-------------------------- */
 
-
+#define TERMINAL__BUFFER_SIZE                     (64)
 
 
 /* Data Types --------------------------------------------------------------- */
 
 typedef struct {
-  USART_t *module;
-  FILE     stream;
+  usart_t usart;
+  FILE    stream;
+  uint8_t buffer[TERMINAL__BUFFER_SIZE];
 } terminal_t;
 
 
@@ -33,8 +34,14 @@ void
 void
   terminal__attatch(terminal_t *terminal, FILE **in, FILE **out, FILE **err);
 
+static inline void
+  terminal__rxc_isr(terminal_t *terminal);
+  
+static inline void
+  terminal__dre_isr(terminal_t *terminal);
+
 static inline uint8_t
-  terminal__next(const terminal_t *terminal);
+  terminal__next(terminal_t *terminal);
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -43,10 +50,22 @@ static inline uint8_t
 
 /* Inline Function Definitions ---------------------------------------------- */
 
-uint8_t
-terminal__next(const terminal_t *terminal)
+void
+terminal__rxc_isr(terminal_t *terminal)
 {
-  return usart__read_fast(terminal->module);
+  usart__rxc_isr(&terminal->usart);
+}
+
+void
+terminal__dre_isr(terminal_t *terminal)
+{
+  usart__dre_isr(&terminal->usart);
+}
+
+uint8_t
+terminal__next(terminal_t *terminal)
+{
+  return usart__read_fast(&terminal->usart);
 }
 
 #endif /* TERMINAL_H */
