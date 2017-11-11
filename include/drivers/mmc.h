@@ -69,7 +69,7 @@ typedef enum {
 /* Main mmc data type.
  */
 typedef struct {
-  uspi_t *interface;
+  uspi_t * const interface;
 } mmc_t;
 
 /* The full 24 bit address can be expressed with three
@@ -107,49 +107,63 @@ typedef struct {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  mmc__ctor(mmc_t *mmc, uspi_t *interface);
+  mmc__ctor(mmc_t *mmc, uspi_t *interface)
+  NONNULL;
   
 mmc__result_t
-  mmc__verify(const mmc_t *mmc);
+  mmc__verify(const mmc_t *mmc)
+  NONNULL;
   
 uint8_t
-  mmc__read_register(const mmc_t *mmc, mmc__cmd_t cmd);
+  mmc__read_register(const mmc_t *mmc, mmc__cmd_t cmd)
+  NONNULL;
   
 void
-  mmc__write_registers(const mmc_t *mmc, uint8_t status, uint8_t conf);
+  mmc__write_registers(const mmc_t *mmc, uint8_t status, uint8_t conf)
+  NONNULL;
   
 void
-  mmc__clear_status_register(const mmc_t *mmc);
+  mmc__clear_status_register(const mmc_t *mmc)
+  NONNULL;
   
 mmc__result_t
-  mmc__read_id(const mmc_t *mmc, mmc__id_t *id);
+  mmc__read_id(const mmc_t *mmc, mmc__id_t *id)
+  NONNULL;
   
 mmc__result_t
   mmc__read(const mmc_t *mmc, mmc__address_t addr,
-            void *data, size_t data_len);
+            void *data, size_t data_len)
+  NONNULL;
 
 mmc__result_t
   mmc__program_page(const mmc_t *mmc, mmc__page_t page,
-                    const void *src, size_t src_len);
+                    const void *src, size_t src_len)
+  NONNULL;
            
 mmc__result_t
   mmc__program(const mmc_t *mmc, mmc__address_t addr,
-               const void *src, size_t src_len);
+               const void *src, size_t src_len)
+  NONNULL;
                
 mmc__result_t
-  mmc__erase(const mmc_t *mmc);
+  mmc__erase(const mmc_t *mmc)
+  NONNULL;
 
 uint8_t
-  mmc__wait_until_ready(const mmc_t *mmc);
+  mmc__wait_until_ready(const mmc_t *mmc)
+  NONNULL;
 
 static inline uint8_t
-  mmc__read_status_register(const mmc_t *mmc);
+  mmc__read_status_register(const mmc_t *mmc)
+  NONNULL;
 
 static inline uint8_t
-  mmc__read_configuration_register(const mmc_t *mmc);
+  mmc__read_configuration_register(const mmc_t *mmc)
+  NONNULL;
   
 static inline bool_t
-  mmc__is_busy(const mmc_t *mmc);
+  mmc__is_busy(const mmc_t *mmc)
+  NONNULL;
 
 
 /* Macros ----------------------------------------+--------+----------------- */

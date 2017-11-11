@@ -3,7 +3,7 @@
 
 DEVICE     = atxmega8e5
 CLOCK      = 2000000
-PROGRAMMER = -p x8e5 -B32
+PROGRAMMER = -p x8e5 -B128
 OBJECTS    = main.o
 FUSES      = -U fuse0:w:0xFF:m \
              -U fuse1:w:0x00:m \
@@ -19,12 +19,12 @@ BLD_DIR = build
 CPPFLAGS += -I$(INC_DIR) -Iext/fifo/include
 CFLAGS   += -Wall
 LDFLAGS  += -L$(LIB_DIR)
-LDLIBS   += -lfifo
+LDLIBS   += -lfifo -Wl,-gc-sections
 
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER)
-CC = avr-gcc -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+CC = avr-gcc -Wall -g -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -ffunction-sections
 AR = avr-ar
 COMPILE = $(CC) $(CPPFLAGS)
 
@@ -84,7 +84,7 @@ $(BLD_DIR)/main.elf: $(OBJECTS) $(HEADERS) | $(BLD_DIR)
 # BUILD EXTERNAL LIBRARIES -----------------------------------------------------
 
 $(LIB_DIR)/lib%.a:
-	$(MAKE) -C ext/$(@:$(LIB_DIR)/lib%.a=%) CC="$(CC)" AR="$(AR)" LIB_DIR=../../$(LIB_DIR)
+	$(MAKE) -C ext/$(@:$(LIB_DIR)/lib%.a=%) CC="$(CC) -DNODEBUG" AR="$(AR)" LIB_DIR=../../$(LIB_DIR)
 
 # MAIN HEX FILE ----------------------------------------------------------------
 

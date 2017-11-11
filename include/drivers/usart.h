@@ -28,46 +28,40 @@ typedef struct {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  usart__ctor(usart_t *usart, USART_t *device, void *buffer, size_t buffer_len);
+  usart__ctor(usart_t *usart, USART_t *device, void *buffer, size_t buffer_len)
+  NONNULL;
   
 static inline void
-  usart__rxc_isr(usart_t *usart);
+  usart__rxc_isr(usart_t *usart)
+  NONNULL;
   
 static inline void
-  usart__dre_isr(usart_t *usart);
+  usart__dre_isr(usart_t *usart)
+  NONNULL;
 
 void
-  usart__write(usart_t *usart, const void *src, size_t data_len);
+  usart__write(usart_t *usart, const void *src, size_t data_len)
+  NONNULL;
   
 void
-  usart__write_fast(usart_t *usart, uint8_t data);
+  usart__write_fast(usart_t *usart, uint8_t data)
+  NONNULL;
   
 void
-  usart__read(usart_t *usart, void *dest, size_t data_len);
+  usart__read(usart_t *usart, void *dest, size_t data_len)
+  NONNULL;
   
 uint8_t
-  usart__read_fast(usart_t *usart);
+  usart__read_fast(usart_t *usart)
+  NONNULL;
   
-// static inline void
-//   usart__wait_dr_ready(USART_t *device);
-//
-// static inline void
-//   usart__wait_rx_ready(USART_t *device);
-//
-// static inline void
-//   usart__wait_tx_ready(USART_t *device);
-//
 static inline bool_t
-  usart__is_read_enabled(const usart_t *usart);
+  usart__is_read_enabled(const usart_t *usart)
+  NONNULL;
 
 static inline bool_t
-  usart__is_write_enabled(const usart_t *usart);
-//
-// static inline void
-//   usart__write_fast(USART_t *device, const uint8_t data);
-//
-// static inline uint8_t
-//   usart__read_fast(USART_t *device);
+  usart__is_write_enabled(const usart_t *usart)
+  NONNULL;
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -75,26 +69,6 @@ static inline bool_t
 
 
 /* Inline Function Definitions ---------------------------------------------- */
-
-
-// void
-// usart__wait_dr_ready(USART_t *device)
-// {
-//   while (!(device->STATUS & USART_DREIF_bm)) ;
-// }
-//
-// void
-// usart__wait_rx_ready(USART_t *device)
-// {
-//   while (!(device->STATUS & USART_RXCIF_bm)) ;
-// }
-//
-// void
-// usart__wait_tx_ready(USART_t *device)
-// {
-//   while (!(device->STATUS & USART_TXCIF_bm)) ;
-// }
-//
 
 bool_t
 usart__is_read_enabled(const usart_t *usart)
@@ -117,7 +91,6 @@ usart__rxc_isr(usart_t *usart)
   uint8_t data;
   size_t  res;
 
-  assert(usart != NULL);
   assert(usart__is_read_enabled(usart));
   assert(usart->device->STATUS & USART_RXCIF_bm);
 
@@ -146,10 +119,9 @@ usart__rxc_isr(usart_t *usart)
 void
 usart__dre_isr(usart_t *usart)
 {
-  assert(usart != NULL);
   assert(usart__is_write_enabled(usart));
   assert(usart->device->STATUS & USART_DREIF_bm);
-
+  
   if (fifo__is_empty(&usart->w_fifo)) {
     /* Disable the interrupt */
     usart->device->CTRLA &= ~USART_DREINTLVL_HI_gc;
@@ -159,26 +131,10 @@ usart__dre_isr(usart_t *usart)
 
     res = fifo__read(&usart->w_fifo, &data, 1);
     assert(res == 1);
-
+    
     usart->device->DATA = data;
   }
 }
 
-
-//
-// void
-// usart__write_fast(USART_t *device, const uint8_t data)
-// {
-//   usart__wait_dr_ready(device);
-//   device->DATA = data;
-// }
-//
-//
-// uint8_t
-// usart__read_fast(USART_t *device)
-// {
-//   usart__wait_rx_ready(device);
-//   return device->DATA;
-// }
 
 #endif /* USART_H */

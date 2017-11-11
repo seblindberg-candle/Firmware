@@ -22,9 +22,11 @@ typedef enum {
 } flash_prgmr__parser_state_t;
 
 typedef struct {
-  mmc_t                      *memory;
-  mmc__address_t              bytes_left;
-  flash_prgmr__parser_state_t parser_state;
+  mmc_t * const               memory;
+  flash_prgmr__parser_state_t state;
+  mmc__page_t                 page;
+  mmc__page_t                 bytes_left;
+  size_t                      bytes_read;
   uint8_t                     buffer[MMC__PAGE_SIZE];
 } flash_prgmr_t;
 
@@ -37,10 +39,10 @@ typedef struct {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  flash_prgmr__ctor(flash_prgmr_t *prgmr, const mmc_t *memory);
+  flash_prgmr__ctor(flash_prgmr_t *prgmr, mmc_t *memory);
   
-void
-  flash_prgmr__feed(flash_prgmr_t *prmgr, uint8_t byte);
+bool_t
+  flash_prgmr__feed(flash_prgmr_t *prgmr, uint8_t byte);
 
 
 /* Macros ----------------------------------------+--------+----------------- */

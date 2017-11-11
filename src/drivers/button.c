@@ -1,4 +1,4 @@
-#include <drivers/uspi.h>
+#include <drivers/button.h>
 
 /* Macros ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
@@ -17,27 +17,27 @@
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 void
-uspi__ctor(uspi_t *uspi, USART_t *device, PORT_t *cs_port, uint8_t cs_bm)
+button__ctor(button_t *button, PORT_t *port, uint8_t pin_bm)
 {
-  WRITE_CONST(uspi->device,  USART_t *, device);
+  gpio__ctor(&button->gpio, port, pin_bm, GPIO__MODE_INPUT);
   
-  /* Configure the CS pin as an output
-     Make sure it is set high before we initialize it to
-     avoid selecting the device */
-  cs_port->OUTSET = cs_bm;
-  gpio__ctor(&uspi->cs, cs_port, cs_bm, GPIO__MODE_OUTPUT);
-}
-
-uint8_t
-uspi__select_auto(uspi_t *uspi)
-{
-  uspi__select(uspi);
-  return 1;
+  button->callback = NULL;
 }
 
 void
-uspi__deselect_auto(uint8_t **uspi_p)
+button__register_callback(button_t *button, button__callback_t callback)
 {
-  uspi_t *uspi = (uspi_t *) *uspi_p;
-  uspi__deselect(uspi);
+  button->callback = callback;
+  
+  /* Clear interrupt flags before enabling interrupts */
+  button->gpio.port->INTFLAGS  = button->gpio.pin_bm;
+  button->gpio.port->INTMASK  |= button->gpio.pin_bm;
+  
+  if (button->gpio.port->INTCTRL == 0) {
+    button->gpio.port->INTCTRL = PORT_INTLVL_LO_gc;
+    
+    /* The button driver requires low priority interrupts to
+       be enabled */
+    PMIC.CTRL |= PMIC_LOLVLEN_bm;
+  }
 }

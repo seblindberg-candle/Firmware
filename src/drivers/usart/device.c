@@ -12,7 +12,6 @@
 
 
 
-
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 /* Init
@@ -31,19 +30,27 @@ usart__device__init(USART_t *device, usart__device__baudctrl_t baudctrl,
   device->BAUDCTRLB = (baudctrl >> 8);
 }
 
-void
-usart__device__map_io(USART_t *device, usart__device__remap_t remap)
+/* Port
+ *
+ * Returns the port of the given USART device.
+ */
+PORT_t *
+usart__device__port(USART_t *device)
 {
-  PORT_t* usart_port;
-
-  assert(device != NULL);
-
   if (device == &USARTC0) {
-    usart_port = &PORTC;
+    return &PORTC;
   } else {
     assert(device == &USARTD0);
-    usart_port = &PORTD;
+    return &PORTD;
   }
+}
+
+void
+usart__device__map_gpio(USART_t *device, usart__device__remap_t remap)
+{
+  PORT_t* usart_port;
+  
+  usart_port = usart__device__port(device);
 
   if (remap == USART__DEVICE__NO_REMAP) {
     usart_port->DIRCLR = usart__device__is_read_enabled(device)  ? PIN2_bm : 0;
@@ -63,9 +70,6 @@ usart__device__map_io(USART_t *device, usart__device__remap_t remap)
 void
 usart__device__write(USART_t *device, const void *data, size_t data_len)
 {
-  assert(device != NULL);
-  assert(data != NULL);
-
   if (data_len == 0) {
     return;
   }

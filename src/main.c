@@ -8,86 +8,76 @@
 #include <compiler.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
-#include <drivers/clock.h>
 #include <drivers/terminal.h>
 #include <drivers/mmc.h>
-#include <stdio.h>
+#include <drivers/led.h>
+#include <drivers/usart.h>
+#include <flash_prgmr.h>
 
+#include <board.h>
 
 /* Pin definitions –––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 
 /* Globals –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-// static uint8_t write_buffer[512];
-static terminal_t terminal;
-
 
 /* Functions –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-void mmc_cs(bool_t enable)
-{
-  if (enable) {
-    PORTC.OUTCLR = PIN4_bm;
-  } else {
-    PORTC.OUTSET = PIN4_bm;
-  }
-}
-
 int main(void)
 {
-  uspi_t     mmc_interface;
-  mmc_t      mmc;
-  uint8_t    data[256];
-  size_t     i;
-  
-  //clock__init_32mhz();
-  
-  /* Setup the terminal */
-  usart__device__init(&USARTD0, USART__DEVICE__B57600,
-                      USART__DEVICE__WRITE_ONLY);
-  usart__device__map_io(&USARTD0, USART__DEVICE__REMAP);
-  
-  terminal__ctor(&terminal, &USARTD0);
-  terminal__attatch(&terminal, &stdin, &stdout, &stderr);
-  
-  puts("Booted");
-  
-  uspi__ctor(&mmc_interface, &USARTC0, &PORTC, PIN4_bm);
-  
-  /* Configure SPI for the flash memory */
-  uspi__init(&mmc_interface, USPI__B1MHz, USPI__MODE0_MSb);
-  mmc__ctor(&mmc, &mmc_interface);
-  
-  /* TODO: Move into mmc library */
-  PORTC.OUTSET = PIN5_bm | PIN4_bm | PIN0_bm; /* !WriteProtect, !CS, !HOLD */
-  PORTC.DIRSET = PIN5_bm | PIN4_bm | PIN0_bm;
-  PORTC.PIN2CTRL = PORT_OPC_PULLUP_gc;
+  flash_prgmr_t flash_prgmr;
+  board__init();
+  sei();
   
   /* Verrify the chip */
-  //assert(mmc__verify(&mmc) == MMC__OK);
+  if (mmc__verify(&board.mmc) != MMC__OK) {
+    terminal__puts(&board.terminal, "Failed to verrify MMC\n\r");
+  }
   
   // mmc__write(mmc, address, write_buffer, 512);
-  //flash_prgmr__ctor(&flash_prgrm, &mmc);
+  flash_prgmr__ctor(&flash_prgmr, &board.mmc);
   
   /* Prepare some data */
-  for (i = 0; i < sizeof(data); i ++) {
-    data[i] = (uint8_t) i;
-  }
+  // uint8_t data[256];
+  // for (i = 0; i < sizeof(data); i ++) {
+  //   data[i] = (uint8_t) i;
+  // }
+  //
+  // while (mmc__program_page(&mmc, 0x000000, data, 256) != MMC__OK) {
+  //   puts("Failed to write");
+  //   _delay_ms(1000);
+  // }
   
-  while (mmc__program_page(&mmc, 0x000000, data, 256) != MMC__OK) {
-    puts("Failed to write");
-    _delay_ms(1000);
-  }
-    
+  uint8_t c;
+  
   for (;;) {
-    if (mmc__read(&mmc, 0x000000, data, 256) != MMC__OK) {
-      puts("Failed to read");
-    }
+//     puts("Reading");
+//     if (mmc__read(&board.mmc, 0x000000, data, 256) != MMC__OK) {
+//       puts("Failed to read");
+//     }
+//
+//     puts("Done");
+//     counter ++;
+//
+// #ifndef NDEBUG
+//     for (counter = 0; counter < 255; counter ++) {
+//       printf("%02x ", data[counter]);
+//     }
+//
+//     printf("status = %02x\n", USARTC0.STATUS);
+// #endif
+//
+//     _delay_ms(1000);
     
-    _delay_ms(1000);
-    // data = terminal__next(&terminal);
-    //flash_prgmr__feed(&flash_prgrm, data);
+    led__toggle(&board.status_led);
+    c = terminal__next(&board.terminal);
+    /* Echo the character back for now */
+    usart__write_fast(&board.terminal.usart, c);
+    
+    if (flash_prgmr__feed(&flash_prgmr, c)) {
+      terminal__puts(&board.terminal, "OK\n\r");
+    }
   }
 
   return 0;
@@ -98,10 +88,10 @@ int main(void)
 
 ISR(USARTD0_RXC_vect)
 {
-  terminal__rxc_isr(&terminal);
+  terminal__rxc_isr(&board.terminal);
 }
 
 ISR(USARTD0_DRE_vect)
 {
-  terminal__dre_isr(&terminal);
+  terminal__dre_isr(&board.terminal);
 }

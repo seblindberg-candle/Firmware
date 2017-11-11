@@ -1,5 +1,6 @@
 #include <drivers/mmc.h>
 #include <util/delay.h>
+#include <stdio.h>
 
 /* Macros ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
@@ -21,22 +22,29 @@ static inline void
 void
 mmc__ctor(mmc_t *mmc, uspi_t *interface)
 {
-  mmc->interface = interface;
+  WRITE_CONST(mmc->interface, uspi_t *, interface);
   
   /* Make sure the CS is inactive */
   uspi__deselect(interface);
+  
+  /* Configure GPIO */
+  MMC__HOLD_PORT.OUTSET = MMC__HOLD_PIN_bm;
+  MMC__HOLD_PORT.DIRSET = MMC__HOLD_PIN_bm;
+  
+  MMC__WP_PORT.OUTSET   = MMC__WP_PIN_bm;
+  MMC__WP_PORT.DIRSET   = MMC__WP_PIN_bm;
   
   /* Clear the device status register */
   mmc__clear_status_register(mmc);
 }
 
+/* TODO: This is a mess that needs to be cleaned up later */
 mmc__result_t
 mmc__verify(const mmc_t *mmc)
 {
   mmc__id_t chip_id;
-  
   mmc__read_id(mmc, &chip_id);
-  
+    
   if (chip_id.manufacurer_id != MMC__S25FL032P_MANUFACTURER_ID
         || chip_id.device_id != MMC__S25FL032P_DEVICE_ID) {
     return MMC__INVALID_CHIP_ID;

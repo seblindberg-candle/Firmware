@@ -5,8 +5,13 @@
 
 #include <stdint.h>
 #include <avr/io.h>
-//#include <string.h>
-//#include <stdio.h>
+
+#ifndef NDEBUG
+#include <string.h>
+#include <stdio.h>
+#endif
+
+//#define __ASSERT_USE_STDERR
 #include <assert.h>
 
 
@@ -35,7 +40,7 @@ typedef uint_fast8_t bool_t;
   __attribute__((__deprecated__))
 #define NONNULL                                   __attribute__((__nonnull__))
 #define NONNULL_ARGS(...)                                   \
-  __attribute__((__nonnull__ (##__VA_ARGS__)))
+  __attribute__((__nonnull__ (__VA_ARGS__)))
 #define PURE                                      __attribute__((__pure__))
 #define CLEANUP(fn)                                         \
   __attribute__((__cleanup__(fn)))
