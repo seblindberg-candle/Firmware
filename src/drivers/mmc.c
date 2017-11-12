@@ -10,6 +10,10 @@
   
 static inline void
   write_cmd(const mmc_t *mmc, mmc__cmd_t cmd, mmc__address_t addr);
+  
+static void
+  program_page(const mmc_t *mmc, mmc__address_t *addr,
+               const void **src, size_t *src_len);
 
 
 /* Global Variables ––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -38,12 +42,23 @@ mmc__ctor(mmc_t *mmc, uspi_t *interface)
   mmc__clear_status_register(mmc);
 }
 
-/* TODO: This is a mess that needs to be cleaned up later */
+/* Verify
+ *
+ * Read the the manufacturer and device id of the chip and check them against
+ * the preset values. Returns MMC__INVALID_CHIP_ID if the values do not match
+ * and MMC__OK otherwise.
+ */
 mmc__result_t
 mmc__verify(const mmc_t *mmc)
 {
-  mmc__id_t chip_id;
-  mmc__read_id(mmc, &chip_id);
+  mmc__id_t     chip_id;
+  mmc__result_t res;
+  
+  res = mmc__read_id(mmc, &chip_id);
+  
+  if (res != MMC__OK) {
+    return res;
+  }
     
   if (chip_id.manufacurer_id != MMC__S25FL032P_MANUFACTURER_ID
         || chip_id.device_id != MMC__S25FL032P_DEVICE_ID) {
@@ -68,6 +83,10 @@ mmc__read_id(const mmc_t *mmc, mmc__id_t *id)
   return MMC__OK;
 }
 
+/* Read
+ *
+ * Access memory starting from address addr.
+ */
 mmc__result_t
 mmc__read(const mmc_t *mmc, mmc__address_t addr, void *data, size_t data_len)
 {
@@ -83,10 +102,13 @@ mmc__read(const mmc_t *mmc, mmc__address_t addr, void *data, size_t data_len)
   return MMC__OK;
 }
 
+/* Write Enable
+ */
 mmc__result_t
 mmc__write_enable(const mmc_t *mmc)
 {
-  /* First make sure the device is not busy */
+  /* First make sure the device is not busy
+     TODO: this may not be necessary */
   if (mmc__is_busy(mmc)) {
     return MMC__BUSY;
   }
@@ -98,6 +120,8 @@ mmc__write_enable(const mmc_t *mmc)
   return MMC__OK;
 }
 
+/* Write Disable
+ */
 mmc__result_t
 mmc__write_disable(const mmc_t *mmc)
 {
@@ -151,14 +175,19 @@ mmc__clear_status_register(const mmc_t *mmc)
 
 /* Program Page
  *
- * Program (only change 0 -> 1) a single page of data.
+ * Program (only change 1 -> 0) a single page of data.
  */
 mmc__result_t
-mmc__program_page(const mmc_t *mmc, mmc__page_t page,
+mmc__program_page(const mmc_t *mmc, mmc__address_t addr,
                   const void *src, size_t src_len)
 {
   mmc__result_t res;
-  assert(src_len <= 265);
+  const uint8_t page_offset = (uint8_t) addr;
+  
+  /* This is to guard against writing to the same page over
+     and over as the write position wraps around past the
+     end of the page */
+  assert(src_len <= 265 - page_offset);
   
   if (src_len == 0) {
     return MMC__OK;
@@ -169,48 +198,104 @@ mmc__program_page(const mmc_t *mmc, mmc__page_t page,
     return res;
   }
   
+  /* TODO: Calculate how much we actually want to write (to
+     avoid wraping around to the beginning of the page) */
+  // if (page_offset != 0) {
+  //
+  // }
+  
   uspi__transaction(mmc->interface) {
-    write_cmd(mmc, MMC__CMD_PP, MMC__PAGE_TO_ADDRESS(page));
+    write_cmd(mmc, MMC__CMD_PP, addr);
     uspi__write(mmc->interface, src, src_len);
   }
   
   return MMC__OK;
 }
 
+void
+program_page(const mmc_t *mmc, mmc__address_t *addr,
+             const void **src, size_t *src_len)
+{
+  mmc__result_t res;
+  const uint8_t page_offset = (uint8_t) *addr;
+  mmc__page_t to_write;
+     
+  res = mmc__write_enable(mmc);
+  if (res != MMC__OK) {
+    return;
+  }
+
+  /* Calculate how much we actually want to write (to avoid
+     wraping around to the beginning of the page) */
+  if (page_offset == 0) {
+    to_write = MMC__PAGE_SIZE;
+  } else {
+    to_write = MMC__PAGE_SIZE - page_offset;
+  }
+  
+  if (to_write > *src_len) {
+    to_write = *src_len;
+    *src_len = 0;
+  } else {
+    *src_len -= to_write;
+  }
+
+  uspi__transaction(mmc->interface) {
+    write_cmd(mmc, MMC__CMD_PP, *addr);
+    uspi__write(mmc->interface, *src, to_write);
+  }
+  
+  *addr += to_write;
+  *src  += to_write;
+
+  return;
+}
+
 /* Program
  *
- * Program (only change 0 -> 1) any section of data.
+ * Program (only change 1 -> 0) any section of data.
  */
 mmc__result_t
 mmc__program(const mmc_t *mmc, mmc__address_t addr,
              const void *src, size_t src_len)
 {
-  mmc__page_t page;
+  const uint8_t page_offset = (uint8_t) addr;
     
   if (src_len == 0) {
     return MMC__OK;
   }
+  
+  do {
+    program_page(mmc, &addr, &src, &src_len);
+    /* Wait for the programming to finish */
+    
+  } while (src_len > 0);
   
   if (mmc__is_busy(mmc)) {
     return MMC__BUSY;
   }
   
   /* Program the first page (if partial) */
-  if ((uint8_t) addr) {
-    /* TODO: Figure out how to program with a 24 bit address */
-    //mmc__program_page(mmc)
+  if (page_offset) {
+    const uint8_t to_write = (uint8_t) ((uint16_t) 256 - page_offset);
+    
+    mmc__program_page(mmc, addr, src, to_write);
+    
+    addr    += to_write;
+    src     += to_write;
+    src_len -= to_write;
   }
-  
-  page = MMC__ADDRESS_TO_PAGE(addr) + 1;
-  
+    
   while (src_len >= 256) {
-    mmc__program_page(mmc, page, src, 256);
+    mmc__program_page(mmc, addr, src, 256);
+    
+    addr    += 256;
+    src     += 256;
     src_len -= 256;
-    page ++;
   }
   
   /* Program the last page of data */
-  mmc__program_page(mmc, page, src, src_len);
+  mmc__program_page(mmc, addr, src, src_len);
   
   return MMC__OK;
 }

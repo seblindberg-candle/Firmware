@@ -56,6 +56,10 @@ uint8_t
   NONNULL;
   
 static inline bool_t
+  usart__is_empty(usart_t *usart)
+  NONNULL;
+  
+static inline bool_t
   usart__is_read_enabled(const usart_t *usart)
   NONNULL;
 
@@ -69,6 +73,12 @@ static inline bool_t
 
 
 /* Inline Function Definitions ---------------------------------------------- */
+
+bool_t
+usart__is_empty(usart_t *usart)
+{
+  return fifo__is_empty(&usart->r_fifo);
+}
 
 bool_t
 usart__is_read_enabled(const usart_t *usart)

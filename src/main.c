@@ -9,11 +9,11 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <drivers/terminal.h>
+#include <drivers/terminal/cmd.h>
 #include <drivers/mmc.h>
 #include <drivers/led.h>
 #include <drivers/usart.h>
 #include <flash_prgmr.h>
-
 #include <board.h>
 
 /* Pin definitions –––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -23,6 +23,27 @@
 
 
 /* Functions –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+bool_t
+detect_write_cmd(terminal__cmd_t *cmd, uint8_t c)
+{
+  if (c == 'W') {
+    return true;
+  }
+  
+  return false;
+}
+
+bool_t
+parse_write_cmd(terminal__cmd_t *cmd, uint8_t c)
+{
+  switch (c) {
+  default:
+    break;
+  }
+  
+  return false;
+}
 
 int main(void)
 {
@@ -49,6 +70,11 @@ int main(void)
   //   _delay_ms(1000);
   // }
   
+  terminal__cmd_t write_cmd;
+  terminal__cmd__ctor(&write_cmd, detect_write_cmd, parse_write_cmd);
+  
+  terminal__add_cmd(&board.terminal, &write_cmd);
+  
   uint8_t c;
   
   for (;;) {
@@ -71,13 +97,7 @@ int main(void)
 //     _delay_ms(1000);
     
     led__toggle(&board.status_led);
-    c = terminal__next(&board.terminal);
-    /* Echo the character back for now */
-    usart__write_fast(&board.terminal.usart, c);
-    
-    if (flash_prgmr__feed(&flash_prgmr, c)) {
-      terminal__puts(&board.terminal, "OK\n\r");
-    }
+    terminal__spin_once(&board.terminal);
   }
 
   return 0;

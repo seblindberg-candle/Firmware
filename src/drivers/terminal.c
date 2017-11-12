@@ -32,6 +32,9 @@ static int
 void
 terminal__ctor(terminal_t *terminal, USART_t *device)
 {
+  s_list__ctor(&terminal->cmd_list);
+  terminal->cmd_active = NULL;
+  
 #if TERMINAL__SUPPORT_STREAM
   bool_t r = usart__device__is_read_enabled(device);
   bool_t w = usart__device__is_write_enabled(device);
@@ -67,6 +70,41 @@ terminal__attatch(terminal_t *terminal, FILE **in, FILE **out, FILE **err)
   if (err != NULL) *err = &terminal->stream;
 }
 #endif
+
+void
+terminal__spin_once(terminal_t *terminal)
+{
+  uint8_t c;
+  terminal__cmd_t *cmd;
+  
+  /* Do nothing if there are no commands registered */
+  if (s_list__is_empty(&terminal->cmd_list)) {
+    return;
+  }
+  
+  if (terminal__next(terminal, &c) == false) {
+    return;
+  }
+  
+  if (terminal->cmd_active != NULL) {
+    if (terminal__cmd__parse(terminal->cmd_active, c) == false) {
+      terminal->cmd_active = NULL;
+    }
+    
+    return;
+  }
+  
+  /* Try to find a command */
+  cmd = (terminal__cmd_t *) s_list__first(&terminal->cmd_list);
+  
+  do {
+    if (terminal__cmd__detect(cmd, c)) {
+      terminal->cmd_active = cmd;
+      break;
+    }
+    cmd = terminal__cmd__next(cmd);
+  } while (cmd != NULL);
+}
 
 /* Puts
  *

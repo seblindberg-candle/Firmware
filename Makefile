@@ -16,10 +16,10 @@ SRC_DIR = src
 LIB_DIR = lib
 BLD_DIR = build
 
-CPPFLAGS += -I$(INC_DIR) -Iext/fifo/include
+CPPFLAGS += -I$(INC_DIR) -Iext/fifo/include -Iext/list/include
 CFLAGS   += -Wall
 LDFLAGS  += -L$(LIB_DIR)
-LDLIBS   += -lfifo -Wl,-gc-sections
+LDLIBS   += -lfifo -llist -Wl,-gc-sections
 
 # Tune the lines below only if you know what you are doing:
 

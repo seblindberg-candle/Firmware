@@ -15,15 +15,15 @@
 
 /* Data Types --------------------------------------------------------------- */
 
-struct button_t; /* Forward reference */
+typedef struct button_t button_t; /* Forward reference */
 typedef void (*button__callback_t)(struct button_t *button);
 
-typedef struct {
+struct button_t {
   gpio_t             gpio;
   volatile uint8_t   last_state;
   volatile uint16_t  last_updated;
   button__callback_t callback;
-} button_t;
+};
 
 typedef enum {
   BUTTON__MODE_NO = 0,

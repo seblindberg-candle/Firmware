@@ -136,7 +136,7 @@ mmc__result_t
   NONNULL;
 
 mmc__result_t
-  mmc__program_page(const mmc_t *mmc, mmc__page_t page,
+  mmc__program_page(const mmc_t *mmc, mmc__address_t addr,
                     const void *src, size_t src_len)
   NONNULL;
            

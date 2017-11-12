@@ -5,6 +5,8 @@
 
 #include <compiler.h>
 #include <drivers/usart.h>
+#include <drivers/terminal/cmd.h>
+#include <list/s_list.h>
 
 
 /* Constants -------------------------------------+-------------------------- */
@@ -24,11 +26,20 @@
 /* Data Types --------------------------------------------------------------- */
 
 typedef struct {
-  usart_t usart;
+  usart_t  usart;
+  
+  /* Command parser */
+  s_list_t         cmd_list;
+  terminal__cmd_t *cmd_active;
+  
 #if TERMINAL__SUPPORT_STREAM
-  FILE    stream;
+  FILE     stream;
 #endif
-  uint8_t buffer[TERMINAL__BUFFER_SIZE];
+
+  /* Data buffer for incomming and outgoing data. If both
+     reading and writing are enabled the buffer will be
+     split in half. */
+  uint8_t  buffer[TERMINAL__BUFFER_SIZE];
 } terminal_t;
 
 
@@ -40,7 +51,7 @@ typedef struct {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  terminal__ctor(terminal_t *terminal, USART_t *module)
+  terminal__ctor(terminal_t *terminal, USART_t *device)
   NONNULL;
 
 #if TERMINAL__SUPPORT_STREAM
@@ -63,8 +74,16 @@ void
   terminal__puts(terminal_t *terminal, const char *str)
   NONNULL;
 
-static inline uint8_t
-  terminal__next(terminal_t *terminal)
+static inline bool_t
+  terminal__next(terminal_t *terminal, uint8_t *next_byte)
+  NONNULL;
+  
+static inline void
+  terminal__add_cmd(terminal_t *terminal, terminal__cmd_t *cmd)
+  NONNULL;
+  
+void
+  terminal__spin_once(terminal_t *terminal)
   NONNULL;
 
 /* Macros ----------------------------------------+--------+----------------- */
@@ -86,10 +105,21 @@ terminal__dre_isr(terminal_t *terminal)
   usart__dre_isr(&terminal->usart);
 }
 
-uint8_t
-terminal__next(terminal_t *terminal)
+bool_t
+terminal__next(terminal_t *terminal, uint8_t *next_byte)
 {
-  return usart__read_fast(&terminal->usart);
+  if (usart__is_empty(&terminal->usart)) {
+    return false;
+  }
+  
+  *next_byte = usart__read_fast(&terminal->usart);
+  return true;
+}
+
+void
+terminal__add_cmd(terminal_t *terminal, terminal__cmd_t *cmd)
+{
+  s_list__unshift(&terminal->cmd_list, &cmd->_super);
 }
 
 #endif /* TERMINAL_H */
