@@ -1,11 +1,11 @@
-#ifndef TERMINAL_H
-#define TERMINAL_H 1
+#ifndef UTIL_TERMINAL_H
+#define UTIL_TERMINAL_H 1
 
 /* Includes ----------------------------------------------------------------- */
 
 #include <compiler.h>
 #include <drivers/usart.h>
-#include <drivers/terminal/cmd.h>
+#include <util/terminal/cmd.h>
 #include <list/s_list.h>
 
 
@@ -122,4 +122,4 @@ terminal__add_cmd(terminal_t *terminal, terminal__cmd_t *cmd)
   s_list__unshift(&terminal->cmd_list, &cmd->_super);
 }
 
-#endif /* TERMINAL_H */
+#endif /* UTIL_TERMINAL_H */

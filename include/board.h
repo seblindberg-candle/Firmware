@@ -5,10 +5,10 @@
 
 #include <compiler.h>
 #include <drivers/led.h>
-#include <drivers/terminal.h>
 #include <drivers/clock.h>
 #include <drivers/mmc.h>
 #include <drivers/uspi.h>
+#include <util/terminal.h>
 
 
 /* Constants -------------------------------------+-------------------------- */

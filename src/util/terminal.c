@@ -1,4 +1,4 @@
-#include <drivers/terminal.h>
+#include <util/terminal.h>
 
 /* Macros ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 

@@ -1,5 +1,5 @@
-#ifndef TERMINAL_CMD_H
-#define TERMINAL_CMD_H 1
+#ifndef UTIL_TERMINAL_CMD_H
+#define UTIL_TERMINAL_CMD_H 1
 
 /* Includes ----------------------------------------------------------------- */
 
@@ -75,4 +75,4 @@ terminal__cmd__next(const terminal__cmd_t *cmd)
   return (terminal__cmd_t *) s_list_item__next(&cmd->_super);
 }
 
-#endif /* TERMINAL_CMD_H */
+#endif /* UTIL_TERMINAL_CMD_H */

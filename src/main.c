@@ -8,8 +8,10 @@
 #include <compiler.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
-#include <drivers/terminal.h>
-#include <drivers/terminal/cmd.h>
+
+#include <util/terminal.h>
+#include <util/terminal/cmd.h>
+
 #include <drivers/mmc.h>
 #include <drivers/led.h>
 #include <drivers/usart.h>

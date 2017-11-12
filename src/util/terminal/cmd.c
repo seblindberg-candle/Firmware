@@ -1,4 +1,4 @@
-#include <drivers/terminal/cmd.h>
+#include <util/terminal/cmd.h>
 
 /* Macros ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
