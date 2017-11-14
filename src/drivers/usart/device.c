@@ -20,6 +20,8 @@ void
 usart__device__init(USART_t *device, usart__device__baudctrl_t baudctrl,
                     usart__device__config_t conf)
 {
+  usart__device__enable_power(device);
+  
   device->CTRLB = conf;
 
   device->CTRLC = USART_CMODE_ASYNCHRONOUS_gc
@@ -28,21 +30,6 @@ usart__device__init(USART_t *device, usart__device__baudctrl_t baudctrl,
 
   device->BAUDCTRLA = (uint8_t) baudctrl;
   device->BAUDCTRLB = (baudctrl >> 8);
-}
-
-/* Port
- *
- * Returns the port of the given USART device.
- */
-PORT_t *
-usart__device__port(USART_t *device)
-{
-  if (device == &USARTC0) {
-    return &PORTC;
-  } else {
-    assert(device == &USARTD0);
-    return &PORTD;
-  }
 }
 
 void

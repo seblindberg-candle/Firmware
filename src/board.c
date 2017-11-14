@@ -24,6 +24,13 @@ board__init()
 {
   const char *boot_msg = "Candle [mmc]\n\r\n\r";
   
+  /* Turn on Power Reduction */
+  PR.PRGEN = PR_XCL_bm | PR_RTC_bm | PR_EVSYS_bm | PR_EDMA_bm;
+  PR.PRPA  = PR_DAC_bm | PR_ADC_bm | PR_AC_bm;
+  PR.PRPC  = PR_TWI_bm | PR_USART0_bm | PR_SPI_bm | PR_HIRES_bm | PR_TC5_bm
+           | PR_TC4_bm;
+  PR.PRPD  = PR_USART0_bm | PR_TC5_bm;
+  
   //clock__init_32mhz();
   
   led__ctor(&board.power_led,  &BOARD__POWER_LED_PORT,

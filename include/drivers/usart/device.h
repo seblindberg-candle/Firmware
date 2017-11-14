@@ -63,8 +63,12 @@ void
               usart__device__config_t conf)
   NONNULL;
 
-PORT_t *
+static inline PORT_t *
   usart__device__port(USART_t *device)
+  NONNULL;
+
+static inline void
+  usart__device__enable_power(USART_t *device)
   NONNULL;
 
 void
@@ -121,6 +125,36 @@ static inline uint8_t
 
 
 /* Inline Function Definitions ---------------------------------------------- */
+
+/* Port
+ *
+ * Returns the port of the given USART device.
+ */
+PORT_t *
+usart__device__port(USART_t *device)
+{
+  if (device == &USARTC0) {
+    return &PORTC;
+  } else {
+    assert(device == &USARTD0);
+    return &PORTD;
+  }
+}
+
+/* Enable Power
+ *
+ * Clears the USART0 bit in the global power reduction register.
+ */
+void
+usart__device__enable_power(USART_t *device)
+{
+  if (device == &USARTC0) {
+    PR.PRPC &= ~PR_USART0_bm;
+  } else {
+    assert(device == &USARTD0);
+    PR.PRPD &= ~PR_USART0_bm;
+  }
+}
 
 /* Is Remaped
  */

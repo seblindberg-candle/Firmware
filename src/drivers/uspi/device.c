@@ -22,6 +22,8 @@ uspi__device__init(USART_t *device, uspi__device__baudctrl_t baudctrl,
 {
   PORT_t *port;
 
+  usart__device__enable_power(device);
+
   /* Reset the device */
   device->CTRLA = 0;
   device->CTRLB = 0;
