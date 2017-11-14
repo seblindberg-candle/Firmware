@@ -51,7 +51,7 @@ terminal__ctor(terminal_t *terminal, USART_t *device)
   
   fdev_set_udata(&terminal->stream, &terminal->usart);
 #endif
-    
+  
   usart__ctor(&terminal->usart, device, terminal->buffer,
     TERMINAL__BUFFER_SIZE);
 }
@@ -59,7 +59,7 @@ terminal__ctor(terminal_t *terminal, USART_t *device)
 /* Attach
  *
  * Connect the internal terminal stream to the provided in, out and error
- * streams.
+ * streams. Only included if TERMINAL__SUPPORT_STREAM has been defined.
  */
 #if TERMINAL__SUPPORT_STREAM
 void
@@ -71,6 +71,10 @@ terminal__attatch(terminal_t *terminal, FILE **in, FILE **out, FILE **err)
 }
 #endif
 
+/* Spin Once
+ *
+ *
+ */
 void
 terminal__spin_once(terminal_t *terminal)
 {
@@ -87,11 +91,14 @@ terminal__spin_once(terminal_t *terminal)
   }
   
   if (terminal->cmd_active != NULL) {
+    /* The cmd__parse function should return false when it
+       receives the first byte that does not match its
+       pattern */
     if (terminal__cmd__parse(terminal->cmd_active, c) == false) {
       terminal->cmd_active = NULL;
+    } else {
+      return;
     }
-    
-    return;
   }
   
   /* Try to find a command */
@@ -102,6 +109,7 @@ terminal__spin_once(terminal_t *terminal)
       terminal->cmd_active = cmd;
       break;
     }
+    
     cmd = terminal__cmd__next(cmd);
   } while (cmd != NULL);
 }
@@ -125,7 +133,8 @@ terminal__puts(terminal_t *terminal, const char *str)
 
 /* Term Putchar
  *
- * Private function used by the terminal stream.
+ * Private function used by the terminal stream. Only included if
+ * TERMINAL__SUPPORT_STREAM has been defined.
  */
 #if TERMINAL__SUPPORT_STREAM
 int
@@ -145,7 +154,8 @@ term_putchar(char data, FILE *stream)
 
 /* Term Getchar
  *
- * Private function used by the terminal stream.
+ * Private function used by the terminal stream. Only included if
+ * TERMINAL__SUPPORT_STREAM has been defined.
  */
 #if TERMINAL__SUPPORT_STREAM
 int

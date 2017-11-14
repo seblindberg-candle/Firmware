@@ -54,6 +54,11 @@ void
   terminal__ctor(terminal_t *terminal, USART_t *device)
   NONNULL;
 
+/* Attatch
+ *
+ * If TERMINAL__SUPPORT_STREAM is not defined, or set to 0, the function is
+ * instead defined as an empty macro.
+ */
 #if TERMINAL__SUPPORT_STREAM
 void
   terminal__attatch(terminal_t *terminal, FILE **in, FILE **out, FILE **err)
