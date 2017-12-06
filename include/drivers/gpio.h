@@ -54,6 +54,22 @@ static inline void
 static inline uint8_t
   gpio__value(const gpio_t *gpio)
   NONNULL;
+    
+static inline void
+  gpio__enable_interrupts(gpio_t *gpio)
+  NONNULL;
+  
+static inline void
+  gpio__disable_interrupts(gpio_t *gpio)
+  NONNULL;
+  
+static inline void
+  gpio__clear_interrupt_flags(gpio_t *gpio)
+  NONNULL;
+  
+stating inline uint8_t
+  gpio__get_interrupt_flags(const gpio_t *gpio)
+  NONNULL;
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -84,6 +100,30 @@ uint8_t
 gpio__value(const gpio_t *gpio)
 {
   return gpio->port->IN & gpio->pin_bm;
+}
+
+void
+gpio__enable_interrupts(gpio_t *gpio)
+{
+  gpio->port->INTMASK |= gpio->pin_bm;
+}
+
+void
+gpio__disable_interrupts(gpio_t *gpio)
+{
+  gpio->port->INTMASK &= ~gpio->pin_bm;
+}
+
+uint8_t
+gpio__get_interrupt_flags(const gpio_t *gpio)
+{
+  return gpio->port->INTFLAGS & gpio->pin_bm;
+}
+
+void
+gpio__clear_interrupt_flags(gpio_t *gpio)
+{
+  gpio->port->INTFLAGS = gpio->pin_bm;
 }
 
 #endif /* GPIO_H */

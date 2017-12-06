@@ -5,6 +5,7 @@
 
 #include <compiler.h>
 #include <drivers/gpio.h>
+#include <drivers/ticker_listener.h>
 
 
 /* Constants -------------------------------------+-------------------------- */
@@ -12,10 +13,13 @@
 #define BUTTON__MODE_NC_bm
 #define BUTTON__MODE_NO_bm
 
+#define BUTTON__DEBOUNCE_TIMEOUT                  (10)
+
 
 /* Data Types --------------------------------------------------------------- */
 
 typedef struct button_t button_t; /* Forward reference */
+
 typedef void (*button__callback_t)(struct button_t *button);
 
 struct button_t {
@@ -23,6 +27,8 @@ struct button_t {
   volatile uint8_t   last_state;
   volatile uint16_t  last_updated;
   button__callback_t callback;
+  ticker_t          *ticker;
+  ticker_listener_t  ticker_listener;
 };
 
 typedef enum {
@@ -70,21 +76,18 @@ button__state(const button_t *button)
 void
 button__isr(button_t *button)
 {
-  uint8_t changes;
-  
   /* Only handle interrupts triggered by us */
-  if ((button->gpio.port->INTFLAGS & button->gpio.pin_bm) == 0) {
-  //  gpio__is_interrupt_triggered(&button->gpio)
+  if (gpio__get_interrupt_flags(&button->gpio) == 0) {
     return;
   }
   
-  button->gpio.port->INTFLAGS = button->gpio.pin_bm;
-  // gpio__clear_interrupt(&button->gpio);
+  /* Disable the isr and clear the interrupt */
+  gpio__disable_interrupts(&button->gpio);
   
-  changes = button__state(button) ^ button->last_state;
-  
-  assert(button->callback != NULL);
-  button->callback(button);
+  /* Set a timeout to debounce the button. We don't yet know
+     if it was just noise. */
+  ticker__add_listener(button->ticker, &button->ticker_listener,
+                       BUTTON__DEBOUNCE_TIMEOUT);
   
   //button->last_updated = now;
 }

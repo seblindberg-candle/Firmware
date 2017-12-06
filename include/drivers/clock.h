@@ -1,5 +1,5 @@
-#ifndef CLOCK_H
-#define CLOCK_H 1
+#ifndef DRIVERS_CLOCK_H
+#define DRIVERS_CLOCK_H 1
 
 /* Includes ----------------------------------------------------------------- */
 
@@ -13,7 +13,7 @@
 
 /* Data Types --------------------------------------------------------------- */
 
-
+typedef uint16_t clock__timestamp_t;
 
 
 /* Global Variables --------------------------------------------------------- */
@@ -25,7 +25,12 @@
 
 void
   clock__init_32mhz();
+  
+void
+  clock__init_rtc();
 
+static inline clock__timestamp_t
+  clock__time();
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -36,4 +41,4 @@ void
 
 
 
-#endif /* CLOCK_H */
+#endif /* DRIVERS_CLOCK_H */
