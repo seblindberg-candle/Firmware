@@ -1,4 +1,4 @@
-#include <drivers/ticker_listener.h>
+#include <drivers/clock/alarm.h>
 
 /* Macros ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
@@ -17,12 +17,12 @@
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 void
-ticker_listener__ctor(ticker_listener_t *listener,
-                      ticker__callback_t callback,
-                      void *ctx)
+clock__alarm__ctor(clock__alarm_t *alarm,
+                   clock__alarm__callback_t callback,
+                   void *ctx)
 {
-  s_list_item__ctor(&listener->_super);
-  listener->callback = callback;
-  listener->ctx      = ctx;
+  s_list_item__ctor(&alarm->_super);
+  alarm->callback = callback;
+  alarm->ctx      = ctx;
 }
 

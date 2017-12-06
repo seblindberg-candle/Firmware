@@ -1,5 +1,5 @@
-#ifndef DRIVERS_TICKER_LISTENER_H
-#define DRIVERS_TICKER_LISTENER_H 1
+#ifndef DRIVERS_CLOCK_ALARM_H
+#define DRIVERS_CLOCK_ALARM_H 1
 
 /* Includes ----------------------------------------------------------------- */
 
@@ -14,15 +14,15 @@
 
 /* Data Types --------------------------------------------------------------- */
 
-typedef uint16_t ticker__timestamp_t;
-typedef void  (*ticker__callback_t)(void *ctx);
+typedef uint16_t clock__timestamp_t;
+typedef void  (*clock__alarm__callback_t)(void *ctx);
 
 typedef struct {
-  s_list_item_t       _super;
-  ticker__timestamp_t  timestamp;
-  ticker__callback_t   callback;
-  void                *ctx;
-} ticker_listener_t;
+  s_list_item_t           _super;
+  clock__timestamp_t       timestamp;
+  clock__alarm__callback_t callback;
+  void                    *ctx;
+} clock__alarm_t;
 
 
 /* Global Variables --------------------------------------------------------- */
@@ -33,12 +33,12 @@ typedef struct {
 /* Public Functions --------------------------------------------------------- */
 
 void
-  ticker_listener__ctor(ticker_listener_t *listener,
-                        ticker__callback_t callback,
-                        void *ctx);
+  clock__alarm__ctor(clock__alarm_t *alarm,
+                     clock__alarm__callback_t callback,
+                     void *ctx);
 
 static inline void
-  ticker_listener__call(const ticker_listener_t *listener);
+  clock__alarm__call(const clock__alarm_t *alarm);
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -48,9 +48,9 @@ static inline void
 /* Inline Function Definitions ---------------------------------------------- */
 
 void
-ticker_listener__call(const ticker_listener_t *listener)
+clock__alarm__call(const clock__alarm_t *alarm)
 {
-  listener->callback(listener->ctx);
+  alarm->callback(alarm->ctx);
 }
 
-#endif /* DRIVERS_TICKER_LISTENER_H */
+#endif /* DRIVERS_CLOCK_ALARM_H */

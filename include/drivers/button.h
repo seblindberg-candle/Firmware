@@ -5,8 +5,8 @@
 
 #include <compiler.h>
 #include <drivers/gpio.h>
-#include <drivers/ticker.h>
-#include <drivers/ticker_listener.h>
+#include <drivers/clock.h>
+#include <drivers/clock/alarm.h>
 
 
 /* Constants -------------------------------------+-------------------------- */
@@ -28,8 +28,8 @@ struct button_t {
   volatile uint8_t   last_state;
   volatile uint16_t  last_updated;
   button__callback_t callback;
-  ticker_t          *ticker;
-  ticker_listener_t  ticker_listener;
+  clock_t           *clock;
+  clock__alarm_t     alarm;
 };
 
 typedef enum {
@@ -87,8 +87,8 @@ button__isr(button_t *button)
   
   /* Set a timeout to debounce the button. We don't yet know
      if it was just noise. */
-  ticker__add_listener(button->ticker, &button->ticker_listener,
-                       BUTTON__DEBOUNCE_TIMEOUT);
+  clock__set_alarm(button->clock, &button->alarm,
+                   BUTTON__DEBOUNCE_TIMEOUT);
   
   //button->last_updated = now;
 }

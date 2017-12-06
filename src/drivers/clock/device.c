@@ -17,7 +17,7 @@
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 void
-clock__device__init(uint16_t period, uint8_t prescaler)
+clock__device__init(clock__device__timestamp_t period, uint8_t prescaler)
 {
   WRITE_TO_PROTECTED_IOREG();
   OSC.CTRL |= OSC_RC32KEN_bm;

@@ -30,12 +30,11 @@ button__register_callback(button_t *button, button__callback_t callback)
 {
   button->callback = callback;
   
-  ticker_listener__ctor(&button->ticker_listener,
-                        debounce_callback, button);
+  clock__alarm__ctor(&button->alarm,
+                     debounce_callback, button);
   
-  /* Clear interrupt flags before enabling interrupts */
-  button->_super.port->INTFLAGS  = button->_super.pin_bm;
-  button->_super.port->INTMASK  |= button->_super.pin_bm;
+  gpio__clear_interrupt_flags(&button->_super);
+  gpio__enable_interrupts(&button->_super);
   
   if (button->_super.port->INTCTRL == 0) {
     button->_super.port->INTCTRL = PORT_INTLVL_LO_gc;
@@ -59,7 +58,6 @@ debounce_callback(void *ctx)
     button->last_state = state;
   }
   
-  /* Clear any interrupts and enable the ISR again */
-  button->_super.port->INTFLAGS  = button->_super.pin_bm;
-  button->_super.port->INTMASK  |= button->_super.pin_bm;
+  gpio__clear_interrupt_flags(&button->_super);
+  gpio__enable_interrupts(&button->_super);
 }
