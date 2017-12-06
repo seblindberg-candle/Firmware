@@ -40,10 +40,12 @@ void
   NONNULL;
 
 static inline bool_t
-  ticker__has_listeners(ticker_t * const ticker);
+  ticker__has_listeners(ticker_t * const ticker)
+  NONNULL;
   
 static inline void
-  ticker__isr();
+  ticker__isr(ticker_t *ticker)
+  NONNULL;
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -55,14 +57,15 @@ static inline void
 bool_t
 ticker__has_listeners(ticker_t * const ticker)
 {
-  return !s_list__is_empty(ticker->_super);
+  return !s_list__is_empty(&ticker->listeners);
 }
 
 void
-ticker__isr()
+ticker__isr(ticker_t *ticker)
 {
   /* Assume that head is the next listener to be called */
-  const ticker_listener_t *listener = s_list__shift(&ticker->listeners);
+  const ticker_listener_t *listener =
+    (const ticker_listener_t *) s_list__shift(&ticker->listeners);
   ticker__timestamp_t current_time;
   
   if (listener != NULL) {

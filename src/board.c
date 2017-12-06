@@ -33,6 +33,20 @@ board__init()
   
   //clock__init_32mhz();
   
+  /* Setup the systme clock */
+  // /* Activate the 32 MHz oscillator */
+  // WRITE_TO_PROTECTED_IOREG();
+  // OSC.CTRL |= OSC_RC32MEN_bm | OSC_RC2MEN_bm;
+  //
+  // /* Wait for oscillator to become ready */
+  // while (!(OSC.STATUS & OSC_RC32MRDY_bm)) ;
+  //
+  // OSC.CTRL &= ~OSC_RC2MEN_bm;
+  //
+  // /* Switch over */
+  // WRITE_TO_PROTECTED_IOREG();
+  // CLK.CTRL = CLK_SCLKSEL_RC32M_gc;
+    
   led__ctor(&board.power_led,  &BOARD__POWER_LED_PORT,
                                 BOARD__POWER_LED_PIN_bm);
   led__ctor(&board.status_led, &BOARD__STATUS_LED_PORT,

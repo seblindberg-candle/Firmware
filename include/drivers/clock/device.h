@@ -1,5 +1,5 @@
-#ifndef DRIVERS_CLOCK_H
-#define DRIVERS_CLOCK_H 1
+#ifndef DRIVERS_CLOCK_DEVICE_H
+#define DRIVERS_CLOCK_DEVICE_H 1
 
 /* Includes ----------------------------------------------------------------- */
 
@@ -23,7 +23,8 @@
 
 /* Public Functions --------------------------------------------------------- */
 
-
+void
+  clock__device__init(uint16_t period, uint8_t prescaler);
 
 
 /* Macros ----------------------------------------+--------+----------------- */
@@ -35,4 +36,4 @@
 
 
 
-#endif /* DRIVERS_CLOCK_H */
+#endif /* DRIVERS_CLOCK_DEVICE_H */

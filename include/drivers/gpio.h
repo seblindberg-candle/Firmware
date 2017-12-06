@@ -67,7 +67,7 @@ static inline void
   gpio__clear_interrupt_flags(gpio_t *gpio)
   NONNULL;
   
-stating inline uint8_t
+static inline uint8_t
   gpio__get_interrupt_flags(const gpio_t *gpio)
   NONNULL;
 

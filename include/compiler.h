@@ -33,6 +33,8 @@ typedef uint_fast8_t bool_t;
 #define WRITE_CONST(field, type, value)                     \
   *((type *) &(field)) = value
 
+#define WRITE_TO_PROTECTED_IOREG()                          \
+  do { CPU_CCP  = CCP_IOREG_gc; } while (0)
 
 #define PACKED                                    __attribute__((__packed__))
 #define UNUSED                                    __attribute__((__unused__))

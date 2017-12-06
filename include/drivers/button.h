@@ -5,6 +5,7 @@
 
 #include <compiler.h>
 #include <drivers/gpio.h>
+#include <drivers/ticker.h>
 #include <drivers/ticker_listener.h>
 
 
@@ -23,7 +24,7 @@ typedef struct button_t button_t; /* Forward reference */
 typedef void (*button__callback_t)(struct button_t *button);
 
 struct button_t {
-  gpio_t             gpio;
+  gpio_t            _super;
   volatile uint8_t   last_state;
   volatile uint16_t  last_updated;
   button__callback_t callback;
@@ -66,7 +67,7 @@ static inline void
 uint8_t
 button__state(const button_t *button)
 {
-  return gpio__value(&button->gpio);
+  return gpio__value(&button->_super);
 }
 
 /* ISR
@@ -77,12 +78,12 @@ void
 button__isr(button_t *button)
 {
   /* Only handle interrupts triggered by us */
-  if (gpio__get_interrupt_flags(&button->gpio) == 0) {
+  if (gpio__get_interrupt_flags(&button->_super) == 0) {
     return;
   }
   
   /* Disable the isr and clear the interrupt */
-  gpio__disable_interrupts(&button->gpio);
+  gpio__disable_interrupts(&button->_super);
   
   /* Set a timeout to debounce the button. We don't yet know
      if it was just noise. */
