@@ -28,7 +28,6 @@ struct button_t {
   volatile uint8_t   last_state;
   volatile uint16_t  last_updated;
   button__callback_t callback;
-  clock_t           *clock;
   clock__alarm_t     alarm;
 };
 
@@ -87,7 +86,7 @@ button__isr(button_t *button)
   
   /* Set a timeout to debounce the button. We don't yet know
      if it was just noise. */
-  clock__set_alarm(button->clock, &button->alarm,
+  clock__set_alarm(&button->alarm,
                    BUTTON__DEBOUNCE_TIMEOUT);
   
   //button->last_updated = now;

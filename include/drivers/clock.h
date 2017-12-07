@@ -11,14 +11,20 @@
 
 /* Constants -------------------------------------+-------------------------- */
 
-
+#define CLOCK__DEVICE_PRESCALER                   (0)
+#define CLOCK__DEVICE_OVERFLOW_INTERRUPT_LVL      (0)
+#define CLOCK__DEVICE_COMPARE_INTERRUPT_LVL       (0)
 
 
 /* Data Types --------------------------------------------------------------- */
 
 typedef struct {
   s_list_t         alarms;
-  clock__alarm_t  *period_tail;
+  s_list_t         alarms_ovf;
+  
+#ifndef NDEBUG
+  bool_t           is_initialized;
+#endif
 } clock_t;
 
 typedef clock__device__timestamp_t clock__timestamp_t;
@@ -32,60 +38,26 @@ typedef clock__device__timestamp_t clock__timestamp_t;
 /* Public Functions --------------------------------------------------------- */
 
 void
-  clock__ctor(clock_t *clock);
-  NONNULL;
+  clock__init();
+
+static inline clock__timestamp_t
+  clock__time();
 
 void
-  clock__set_alarm(clock_t *clock, clock__alarm_t *alarm,
+  clock__set_alarm(clock__alarm_t *alarm,
                    clock__timestamp_t timestamp)
-  NONNULL;
-
-static inline bool_t
-  clock__has_alarms(clock_t * const clock)
-  NONNULL;
-  
-static inline void
-  clock__isr(clock_t *clock)
   NONNULL;
 
 /* Macros ----------------------------------------+--------+----------------- */
 
 
 
-
 /* Inline Function Definitions ---------------------------------------------- */
 
-bool_t
-clock__has_alarms(clock_t * const clock)
+clock__timestamp_t
+clock__time()
 {
-  return !s_list__is_empty(&clock->alarms);
-}
-
-void
-clock__isr(clock_t *clock)
-{
-  /* Assume that head is the next listener to be called */
-  const clock__alarm_t *alarm;
-  clock__timestamp_t    now;
-
-  for (;;) {
-    /* Look at the next alarm */
-    alarm = (const clock__alarm_t *) s_list__first(&clock->alarms);
-    
-    if (alarm == NULL) {
-      /* Disable the interrupt */
-      break;
-    }
-    
-    if (alarm->timestamp != now) {
-      /* Schedule the next alarm */
-      break;
-    }
-    
-    s_list__shift(&clock->alarms);
-    
-    clock__alarm__call(alarm);
-  }
+  return clock__device__get_count();
 }
 
 #endif /* DRIVERS_CLOCK_H */
