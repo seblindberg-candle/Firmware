@@ -52,7 +52,7 @@ board__init()
   led__ctor(&board.status_led, &BOARD__STATUS_LED_PORT,
                                 BOARD__STATUS_LED_PIN_bm);
 
-  // button__ctor(&board.button, &PORTD, 3);
+  button__ctor(&board.power_button._super, &PORTC, PIN7_bm, BUTTON__MODE_NC);
   // button__register_callback(&board.button, &button_callback);
   //
   // button__isr(&board.button);

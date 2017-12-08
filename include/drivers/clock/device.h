@@ -20,7 +20,7 @@
 
 /* Constants -------------------------------------+-------------------------- */
 
-
+#define CLOCK__DEVICE__SYNC_CYCLES                (2)
 
 
 /* Data Types --------------------------------------------------------------- */
@@ -36,6 +36,24 @@ typedef uint16_t clock__device__timestamp_t;
 /* Public Functions --------------------------------------------------------- */
 
 /* Init
+ *
+ * Starts the 32 kHz oscillator and enables the RTC device. When it is ready it
+ * is configured with the given period and prescaler.
+ *
+ * Note that the 1 kHz output of the oscilator is used.
+ *
+ * Set the period to 0 to use the full range of the timer.
+ *
+ * The posible prescaler values are:
+ *
+ * - RTC_PRESCALER_OFF_gc
+ * - RTC_PRESCALER_DIV1_gc
+ * - RTC_PRESCALER_DIV2_gc
+ * - RTC_PRESCALER_DIV8_gc
+ * - RTC_PRESCALER_DIV16_gc
+ * - RTC_PRESCALER_DIV64_gc
+ * - RTC_PRESCALER_DIV256_gc
+ * - RTC_PRESCALER_DIV1024_gc
  */
 void
   clock__device__init(clock__device__timestamp_t period,
@@ -45,8 +63,15 @@ void
  */
 void
   clock__device__set_alarm(clock__device__timestamp_t timeout);
-  
+
 /* Enable Overflow Interrupt
+ *
+ * The posible interrupt levels are:
+ *
+ * - RTC_OVFINTLVL_OFF_gc
+ * - RTC_OVFINTLVL_LO_gc
+ * - RTC_OVFINTLVL_MED_gc
+ * - RTC_OVFINTLVL_HI_gc
  */
 void
   clock__device__enable_overflow_interrupt(RTC_OVFINTLVL_t level);
@@ -57,6 +82,13 @@ void
   clock__device__disable_overflow_interrupt();
   
 /* Enable Compare Interrupt
+ *
+ * The posible interrupt levels are:
+ *
+ * - RTC_COMPINTLVL_OFF_gc
+ * - RTC_COMPINTLVL_LO_gc
+ * - RTC_COMPINTLVL_MED_gc
+ * - RTC_COMPINTLVL_HI_gc
  */
 void
   clock__device__enable_compare_interrupt(RTC_COMPINTLVL_t level);
@@ -67,6 +99,8 @@ void
   clock__device__disable_compare_interrupt();
             
 /* Is Busy
+ *
+ * Returns non-zero when the device is busy syncronizing. Call this before writing to any of the registers CNT, PER, COMP
  */
 static inline bool_t
   clock__device__is_busy();
@@ -118,6 +152,16 @@ static inline bool_t
  */
 static inline bool_t
   clock__device__get_compare_flag();
+  
+/* Set Interrupts
+ *
+ * Set the interrupt levels directly. See
+ * clock__device__enable_overflow_interrupt and
+ * clock__device__enable_compare_interrupt for posible levels.
+ */
+static inline void
+  clock__device__set_interrupts(RTC_OVFINTLVL_t ovf_level,
+                                RTC_COMPINTLVL_t comp_level);
 
 
 /* Macros ----------------------------------------+--------+----------------- */
@@ -179,6 +223,13 @@ bool_t
 clock__device__get_compare_flag()
 {
   return RTC.INTFLAGS & RTC_COMPIF_bm;
+}
+
+void
+clock__device__set_interrupts(RTC_OVFINTLVL_t ovf_level,
+                              RTC_COMPINTLVL_t comp_level)
+{
+  RTC.INTCTRL = ovf_level | comp_level;
 }
 
 #endif /* DRIVERS_CLOCK_DEVICE_H */

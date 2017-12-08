@@ -6,6 +6,8 @@
 #include <compiler.h>
 #include <drivers/led.h>
 #include <drivers/clock.h>
+#include <drivers/clock/alarm.h>
+#include <drivers/button.h>
 #include <drivers/mmc.h>
 #include <drivers/uspi.h>
 #include <util/terminal.h>
@@ -30,9 +32,14 @@
 
 /* Global Variables --------------------------------------------------------- */
 
-struct {
+struct board {
   led_t      power_led;
   led_t      status_led;
+  
+  struct power_button {
+    button_t      _super;
+    clock__alarm_t timeout_alarm;
+  } power_button;
   
   uspi_t     mmc_interface;
   mmc_t      mmc;

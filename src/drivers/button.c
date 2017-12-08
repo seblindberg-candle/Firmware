@@ -18,17 +18,26 @@ static void
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 void
-button__ctor(button_t *button, PORT_t *port, uint8_t pin_bm)
+button__ctor(button_t *button, PORT_t *port, uint8_t pin_bm,
+             button__mode_t mode)
 {
   gpio__ctor(&button->_super, port, pin_bm, GPIO__MODE_INPUT);
   
-  // button->callback = NULL;
+  PORTCFG.MPCMASK   = pin_bm;
+  if (mode & 0x01) {
+    /* Normally closed button, tied to vcc */
+    port->PIN0CTRL = PORT_OPC_PULLDOWN_gc;
+  } else {
+    /* Normally open button, tied to ground */
+    port->PIN0CTRL = PORT_INVEN_bm | PORT_OPC_PULLUP_gc;
+  }
 }
 
 void
 button__register_callback(button_t *button, button__callback_t callback)
 {
-  button->callback = callback;
+  button->callback   = callback;
+  button->last_state = button__is_down(button);
   
   clock__alarm__ctor(&button->alarm,
                      debounce_callback, button);
