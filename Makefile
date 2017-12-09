@@ -24,7 +24,7 @@ LDLIBS   += -lfifo -llist -Wl,-gc-sections
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER)
-CC = avr-gcc -Wall -g -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -ffunction-sections
+CC = avr-gcc -Wall -g -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE) -fdata-sections -ffunction-sections
 AR = avr-ar
 COMPILE = $(CC) $(CPPFLAGS)
 
@@ -42,7 +42,9 @@ OBJECTS = $(OBJ)
 
 HEADERS = $(shell find $(INC_DIR) -type f -name *.h)
 
-#$(info $(OBJ))
+LIBRARIES := $(wildcard $(LIB_DIR)/lib*.a)
+
+# $(info $(LIBRARIES))
 
 # Make sure the folder structure exists in the build dir
 
