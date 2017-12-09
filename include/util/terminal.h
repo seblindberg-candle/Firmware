@@ -64,7 +64,7 @@ void
   terminal__attatch(terminal_t *terminal, FILE **in, FILE **out, FILE **err)
   NONNULL_ARGS(1);
 #else
-# define terminal__attatch(...)                  (void)
+# define terminal__attatch(...)
 #endif
 
 static inline void

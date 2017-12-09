@@ -74,8 +74,8 @@ mmc__read_id(const mmc_t *mmc, mmc__id_t *id)
   uspi__transaction(mmc->interface) {
     write_cmd(mmc, MMC__CMD_READ_ID, 0);
     
-    id->manufacurer_id = 0xFF;
-    id->device_id      = 0xFF;
+    //id->manufacurer_id = 0xFF;
+    //id->device_id      = 0xFF;
     
     uspi__read(mmc->interface, id, sizeof(mmc__id_t));
   }

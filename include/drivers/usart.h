@@ -99,7 +99,6 @@ void
 usart__rxc_isr(usart_t *usart)
 {
   uint8_t data;
-  size_t  res;
 
   assert(usart__is_read_enabled(usart));
   assert(usart->device->STATUS & USART_RXCIF_bm);
@@ -114,7 +113,11 @@ usart__rxc_isr(usart_t *usart)
   }
 
   /* Insert the received byte into the buffer */
-  res = fifo__write(&usart->r_fifo, &data, 1);
+#ifndef NDEBUG
+  size_t  res;
+  res =
+#endif
+    fifo__write(&usart->r_fifo, &data, 1);
   assert(res == 1);
 }
 
@@ -129,17 +132,20 @@ usart__rxc_isr(usart_t *usart)
 void
 usart__dre_isr(usart_t *usart)
 {
-  assert(usart__is_write_enabled(usart));
+  assert(usart-__is_write_enabled(usart));
   assert(usart->device->STATUS & USART_DREIF_bm);
   
   if (fifo__is_empty(&usart->w_fifo)) {
     /* Disable the interrupt */
     usart->device->CTRLA &= ~USART_DREINTLVL_HI_gc;
   } else {
-    size_t  res;
     uint8_t data;
 
-    res = fifo__read(&usart->w_fifo, &data, 1);
+#ifndef NDEBUG
+    size_t  res;
+    res =
+#endif
+      fifo__read(&usart->w_fifo, &data, 1);
     assert(res == 1);
     
     usart->device->DATA = data;

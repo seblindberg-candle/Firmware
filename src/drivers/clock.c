@@ -9,7 +9,7 @@
 #endif
 
 #ifdef NDEBUG
-# define clock__assert_initialized()              (void)
+# define clock__assert_initialized()
 #else
 # define clock__assert_initialized()                       \
   assert(clock.is_initialized == CLOCK__INITIALIZED)

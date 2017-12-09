@@ -39,12 +39,35 @@ typedef clock__device__timestamp_t clock__timestamp_t;
 
 /* Public Functions --------------------------------------------------------- */
 
+/* Init
+ *
+ * Configures the clock device to run with its full period, at a frequency such
+ * that the timestamp roughly corresponds to milliseconds.
+ */
 void
   clock__init();
 
-static inline clock__timestamp_t
-  clock__time();
+/* Set Alarm
+ *
+ * Schedules an alarm to be called after the specified timeout.
+ */
+void
+  clock__set_alarm(clock__alarm_t *alarm,
+                   clock__timestamp_t timeout)
+  NONNULL;
+
+/* Cancel Alarm
+ *
+ * Removes the alarm from the clock, if it is set.
+ */
+void
+  clock__cancel_alarm(clock__alarm_t *alarm)
+  NONNULL;
   
+/* Spin Once
+ *
+ * Calls the next alarm scheduled to run.
+ */
 void
   clock__spin_once();
   
@@ -53,15 +76,14 @@ void
 
 void
   clock__compare_isr();
-
-void
-  clock__set_alarm(clock__alarm_t *alarm,
-                   clock__timestamp_t timestamp)
-  NONNULL;
   
-void
-  clock__cancel_alarm(clock__alarm_t *alarm)
-  NONNULL;
+/* Clock time
+ *
+ * Returns the current timestamp.
+ */
+static inline clock__timestamp_t
+  clock__time();
+
 
 /* Macros ----------------------------------------+--------+----------------- */
 
@@ -69,6 +91,10 @@ void
 
 /* Inline Function Definitions ---------------------------------------------- */
 
+/* Clock time
+ *
+ * Returns the current timestamp.
+ */
 clock__timestamp_t
 clock__time()
 {
