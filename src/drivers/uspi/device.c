@@ -102,7 +102,8 @@ uspi__device__read(USART_t *device, void *dest, size_t dest_len)
   size_t rxcount = dest_len;
   
   while (dest_len) {
-    while (!(device->STATUS & USART_DREIF_bm)) ;
+    // while (!(device->STATUS & USART_DREIF_bm)) ;
+    usart__device__wait_dr_ready(device);
     device->DATA = 0xFF;     //dummy write
     --dest_len;                  //bytes left to write
     if (device->STATUS & USART_RXCIF_bm) {
@@ -110,8 +111,10 @@ uspi__device__read(USART_t *device, void *dest, size_t dest_len)
       --rxcount;       //bytes left to read
     }
   }
+  
   while (rxcount) {        //wait for any pending bytes
-    while (!(device->STATUS & USART_RXCIF_bm)) ;
+    // while (!(device->STATUS & USART_RXCIF_bm)) ;
+    usart__device__wait_rx_ready(device);
     *((uint8_t *) dest++) = device->DATA;
     --rxcount;
   }

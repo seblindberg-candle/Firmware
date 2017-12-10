@@ -27,25 +27,26 @@
 
 /* Data Types --------------------------------------------------------------- */
 
+typedef struct {
+  led_t      power_led;
+  led_t      status_led;
 
+  struct power_button {
+    button_t      _super;
+    clock__alarm_t timeout_alarm;
+    bool_t         active;
+  } power_button;
+
+  uspi_t     mmc_interface;
+  mmc_t      mmc;
+
+  terminal_t terminal;
+} board_t;
 
 
 /* Global Variables --------------------------------------------------------- */
 
-struct board {
-  led_t      power_led;
-  led_t      status_led;
-  
-  struct power_button {
-    button_t      _super;
-    clock__alarm_t timeout_alarm;
-  } power_button;
-  
-  uspi_t     mmc_interface;
-  mmc_t      mmc;
-  
-  terminal_t terminal;
-} board;
+extern board_t board;
 
 
 /* Public Functions --------------------------------------------------------- */

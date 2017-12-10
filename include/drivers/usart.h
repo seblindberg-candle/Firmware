@@ -132,7 +132,7 @@ usart__rxc_isr(usart_t *usart)
 void
 usart__dre_isr(usart_t *usart)
 {
-  assert(usart-__is_write_enabled(usart));
+  assert(usart__is_write_enabled(usart));
   assert(usart->device->STATUS & USART_DREIF_bm);
   
   if (fifo__is_empty(&usart->w_fifo)) {

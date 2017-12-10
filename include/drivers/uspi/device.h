@@ -64,16 +64,8 @@ void
   uspi__device__read(USART_t *device, void *data, size_t data_len)
   NONNULL;
 
-static inline void
-  uspi__device__write_fast(USART_t *device, uint8_t data)
-  NONNULL;
-
 static inline uint8_t
   uspi__device__exchange(USART_t *device, uint8_t data);
-
-static inline uint8_t
-  uspi__device__read_fast(USART_t *device, uint8_t data)
-  NONNULL;
 
 
 /* Macros ----------------------------------------+--------+----------------- */
@@ -89,26 +81,5 @@ uspi__device__exchange(USART_t *device, uint8_t data)
   return usart__device__read_fast(device);
 }
 
-void
-uspi__device__write_fast(USART_t *device, uint8_t data)
-{
-  uspi__device__exchange(device, data);
-}
-
-uint8_t
-uspi__device__read_fast(USART_t *device, uint8_t data)
-{
-  uint8_t rx_data;
-  //usart__device__write_fast(device, data);
-  //usart__device__wait_rx_ready(device);
-  
-  while (!(device->STATUS & USART_DREIF_bm));
-  device->DATA = data;
-  while (!(device->STATUS & USART_RXCIF_bm));
-  
-  rx_data = device->DATA;
-
-  return rx_data;
-}
 
 #endif /* USPI_DEVICE_H */

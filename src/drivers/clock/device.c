@@ -61,21 +61,21 @@ void
 clock__device__set_alarm(clock__device__timestamp_t timeout)
 {
   const uint16_t period = clock__device__get_period();
-  uint16_t       cmp;
+  uint16_t       timestamp;
   
+  /* We can not set alarms this close to the current count
+     as they will not be synchronized in time */
   if (timeout < CLOCK__DEVICE__SYNC_CYCLES) {
     timeout = CLOCK__DEVICE__SYNC_CYCLES;
   }
   
-  cmp = clock__device__get_count() + timeout;
+  timestamp = clock__device__get_count() + timeout;
   
-  while (cmp > period) {
-    cmp -= period;
+  while (timestamp > period) {
+    timestamp -= period;
   }
   
-  while (clock__device__is_busy()) ;
-  
-  clock__device__set_compare_value(cmp);
+  clock__device__set_alarm_at(timestamp);
 }
 
 /* Enable Overflow Interrupt

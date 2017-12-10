@@ -20,7 +20,7 @@
 
 /* Constants -------------------------------------+-------------------------- */
 
-#define CLOCK__DEVICE__SYNC_CYCLES                (2)
+#define CLOCK__DEVICE__SYNC_CYCLES                (3)
 
 
 /* Data Types --------------------------------------------------------------- */
@@ -63,6 +63,11 @@ void
  */
 void
   clock__device__set_alarm(clock__device__timestamp_t timeout);
+  
+/* Set Alarm At
+ */
+static inline void
+  clock__device__set_alarm_at(clock__device__timestamp_t timestamp);
 
 /* Enable Overflow Interrupt
  *
@@ -97,7 +102,7 @@ void
  */
 void
   clock__device__disable_compare_interrupt();
-            
+              
 /* Is Busy
  *
  * Returns non-zero when the device is busy syncronizing. Call this before writing to any of the registers CNT, PER, COMP
@@ -170,6 +175,13 @@ static inline void
 
 
 /* Inline Function Definitions ---------------------------------------------- */
+
+void
+clock__device__set_alarm_at(clock__device__timestamp_t timestamp)
+{
+  while (clock__device__is_busy()) ;
+  clock__device__set_compare_value(timestamp);
+}
 
 bool_t
 clock__device__is_busy()

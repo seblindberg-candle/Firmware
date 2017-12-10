@@ -20,13 +20,10 @@
 static bool_t
   alarm_insert_handler(const clock__alarm_t *alarm,
                        const clock__alarm_t *compare_to);
-                       
-static inline void
-  set_alarm(clock__device__timestamp_t timestamp);
 
 /* Global Variables ––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-static clock_t clock;
+clock_t clock;
 
 
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -78,6 +75,7 @@ clock__set_alarm(clock__alarm_t *alarm,
   clock__timestamp_t now = clock__time();
   
   alarm->timestamp = now + timeout;
+  
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     if (alarm->timestamp > now) {
       /* If the alarm is set before the timer overflows */
@@ -86,15 +84,15 @@ clock__set_alarm(clock__alarm_t *alarm,
            compare interrupt is disabled */
         s_list__ctor_with_list_item(&clock.alarms, &alarm->_super);
     
-        set_alarm(alarm->timestamp);
+        clock__device__set_alarm(timeout);
         clock__device__enable_compare_interrupt(
           CLOCK__DEVICE_COMPARE_INTERRUPT_LVL);
       } else {
         s_list__insert_ordered(&clock.alarms, &alarm->_super,
                                (s_list__insert_handler_t) alarm_insert_handler);
-    
+        
         if ((clock__alarm_t *) s_list__first(&clock.alarms) == alarm) {
-          set_alarm(alarm->timestamp);
+          clock__device__set_alarm(timeout);
         }
       }
     } else {
@@ -141,74 +139,3 @@ alarm_insert_handler(const clock__alarm_t *alarm,
   return alarm->timestamp < compare_to->timestamp;
 }
 
-void
-clock__overflow_isr()
-{
-  clock__alarm_t *alarm;
-  
-  clock__device__disable_overflow_interrupt();
-
-  /* Add any remaining alarms to the call list */
-  alarm = (clock__alarm_t *) s_list__first(&clock.alarms);
-  if (alarm != NULL) {
-    s_list__push(&clock.call_list, &alarm->_super);
-  }
-
-  alarm = (clock__alarm_t *) s_list__first(&clock.alarms_ovf);
-  if (alarm == NULL) {
-    s_list__ctor(&clock.alarms);
-    clock__device__disable_compare_interrupt();
-    return;
-  }
-
-  /* Reset the lists to a known state */
-  s_list__ctor_with_list_item(&clock.alarms, &alarm->_super);
-  s_list__ctor(&clock.alarms_ovf);
-
-  set_alarm(alarm->timestamp);
-  clock__device__enable_compare_interrupt(
-    CLOCK__DEVICE_COMPARE_INTERRUPT_LVL);
-}
-
-void
-clock__compare_isr()
-{
-  /* Assume that head is the next listener to be called */
-  clock__alarm_t *alarm;
-  const clock__timestamp_t now = clock__time() + CLOCK__DEVICE__SYNC_CYCLES;
-  
-  clock__assert_initialized();
-  
-  for (;;) {
-    /* Look at the next alarm */
-    alarm = (clock__alarm_t *) s_list__first(&clock.alarms);
-
-    if (alarm == NULL) {
-      clock__device__disable_compare_interrupt();
-      break;
-    }
-    
-    if (alarm->timestamp > now) {
-      /* Schedule the next alarm */
-      set_alarm(alarm->timestamp);
-      break;
-    }
-
-    s_list__shift(&clock.alarms);
-    
-    /* Add to the call list */
-    s_list__push(&clock.call_list, &alarm->_super);
-  }
-}
-
-/*
- * Note that we cannot set an alarm too soon as the RTC will not synchronize in
- * time. It needs two cycles to read the compare value.
- */
-void
-set_alarm(clock__device__timestamp_t timestamp)
-{
-  while (clock__device__is_busy()) ;
-  
-  clock__device__set_compare_value(timestamp);
-}

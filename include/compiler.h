@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <avr/io.h>
 
-#define NDEBUG
+//#define NDEBUG
 
 #ifndef NDEBUG
 #include <string.h>

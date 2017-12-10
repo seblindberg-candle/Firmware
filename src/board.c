@@ -14,7 +14,7 @@
 
 /* Global Variables ––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-
+board_t board;
 
 
 /* Function Definitions ––––––––––––––––––––––––––––––––––––––––––––––––––––– */
@@ -53,6 +53,7 @@ board__init()
                                 BOARD__STATUS_LED_PIN_bm);
 
   button__ctor(&board.power_button._super, &PORTC, PIN7_bm, BUTTON__MODE_NC);
+  board.power_button.active = true;
   // button__register_callback(&board.button, &button_callback);
   //
   // button__isr(&board.button);
