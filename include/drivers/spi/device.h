@@ -24,16 +24,11 @@ typedef enum {
 } spi__device__baudctrl_t;
 
 typedef enum {
-  SPI__DEVICE__MODE0_MSb = 0,
-  SPI__DEVICE__MODE1_MSb = 1,
-  SPI__DEVICE__MODE2_MSb = 2,
-  SPI__DEVICE__MODE3_MSb = 3,
-  SPI__DEVICE__MODE0_LSb = 4,
-  SPI__DEVICE__MODE1_LSb = 5,
-  SPI__DEVICE__MODE2_LSb = 6,
-  SPI__DEVICE__MODE3_LSb = 7,
+  SPI__DEVICE__MODE0 = 0x00,
+  SPI__DEVICE__MODE1 = 0x01,
+  SPI__DEVICE__MODE2 = 0x02,
+  SPI__DEVICE__MODE3 = 0x03,
 } spi__device__mode_t;
-
 
 /* Global Variables --------------------------------------------------------- */
 
@@ -49,18 +44,14 @@ void
 
 void
   spi__device__write(SPI_t *device, const void *data, size_t data_len)
-  NONNULL_ARGS(1);
+  NONNULL;
 
 void
   spi__device__read(SPI_t *device, void *data, size_t data_len)
-  NONNULL_ARGS(1);
-
-static inline void
-  spi__device__write_fast(SPI_t *device, uint8_t data)
   NONNULL;
 
 static inline uint8_t
-  spi__device__read_fast(SPI_t *device, uint8_t data)
+  spi__device__exchange(SPI_t *device, uint8_t data)
   NONNULL;
 
 
@@ -72,14 +63,8 @@ static inline uint8_t
 
 /* Inline Function Definitions ---------------------------------------------- */
 
-void
-spi__device__write_fast(SPI_t *device, uint8_t data)
-{
-
-}
-
 uint8_t
-spi__device__read_fast(SPI_t *device, uint8_t data)
+spi__device__exchange(SPI_t *device, uint8_t data)
 {
   return 0;
 }

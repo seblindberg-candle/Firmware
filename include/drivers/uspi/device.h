@@ -65,7 +65,8 @@ void
   NONNULL;
 
 static inline uint8_t
-  uspi__device__exchange(USART_t *device, uint8_t data);
+  uspi__device__exchange(USART_t *device, uint8_t data)
+  NONNULL;
 
 
 /* Macros ----------------------------------------+--------+----------------- */
