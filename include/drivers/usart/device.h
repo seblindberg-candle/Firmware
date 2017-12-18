@@ -13,6 +13,14 @@
 
 #define USART__DEVICE__CLK2X_bm                           (1 << 2)
 
+#define USART__DEVICE__PIN_XCK_bm                 PIN1_bm
+#define USART__DEVICE__PIN_RX_bm                  PIN2_bm
+#define USART__DEVICE__PIN_TX_bm                  PIN3_bm
+
+#define USART__DEVICE__REMAPPED_PIN_XCK_bm        PIN5_bm
+#define USART__DEVICE__REMAPPED_PIN_RX_bm         PIN6_bm
+#define USART__DEVICE__REMAPPED_PIN_TX_bm         PIN7_bm
+
 /* Data Types --------------------------------------------------------------- */
 
 typedef uint32_t usart__device__baud_rate_t;

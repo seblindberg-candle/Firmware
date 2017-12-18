@@ -40,13 +40,17 @@ usart__device__map_gpio(USART_t *device, usart__device__remap_t remap)
   usart_port = usart__device__port(device);
 
   if (remap == USART__DEVICE__NO_REMAP) {
-    usart_port->DIRCLR = usart__device__is_read_enabled(device)  ? PIN2_bm : 0;
-    usart_port->DIRSET = usart__device__is_write_enabled(device) ? PIN3_bm : 0;
+    usart_port->DIRCLR = usart__device__is_read_enabled(device)  ?
+      USART__DEVICE__PIN_RX_bm : 0;
+    usart_port->DIRSET = usart__device__is_write_enabled(device) ?
+      USART__DEVICE__PIN_TX_bm : 0;
   } else {
     usart_port->REMAP = PORT_USART0_bm;
 
-    usart_port->DIRCLR = usart__device__is_read_enabled(device)  ? PIN6_bm : 0;
-    usart_port->DIRSET = usart__device__is_write_enabled(device) ? PIN7_bm : 0;
+    usart_port->DIRCLR = usart__device__is_read_enabled(device)  ?
+      USART__DEVICE__REMAPPED_PIN_RX_bm : 0;
+    usart_port->DIRSET = usart__device__is_write_enabled(device) ?
+      USART__DEVICE__REMAPPED_PIN_TX_bm : 0;
   }
 }
 
