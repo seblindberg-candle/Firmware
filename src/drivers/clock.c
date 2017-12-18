@@ -72,7 +72,7 @@ clock__set_alarm(clock__alarm_t *alarm,
 {
   clock__assert_initialized();
   
-  clock__timestamp_t now = clock__time();
+  clock__timestamp_t now = clock__now();
   
   alarm->timestamp = now + timeout;
   

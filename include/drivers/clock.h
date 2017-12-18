@@ -90,7 +90,7 @@ static inline void
  * Returns the current timestamp.
  */
 static inline clock__timestamp_t
-  clock__time();
+  clock__now();
 
 
 /* Macros ----------------------------------------+--------+----------------- */
@@ -104,7 +104,7 @@ static inline clock__timestamp_t
  * Returns the current timestamp.
  */
 clock__timestamp_t
-clock__time()
+clock__now()
 {
   return clock__device__get_count();
 }
@@ -143,7 +143,7 @@ clock__compare_isr()
 {
   /* Assume that head is the next listener to be called */
   clock__alarm_t *alarm;
-  const clock__timestamp_t now = clock__time() + CLOCK__DEVICE__SYNC_CYCLES;
+  const clock__timestamp_t now = clock__now() + CLOCK__DEVICE__SYNC_CYCLES;
 
   for (;;) {
     /* Look at the next alarm */
