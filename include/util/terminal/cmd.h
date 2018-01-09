@@ -36,7 +36,7 @@ struct terminal__cmd_t {
 void
   terminal__cmd__ctor(terminal__cmd_t *cmd, terminal__cmd__detector_t detector,
                       terminal__cmd__parser_t parser)
-  NONNULL;
+  NONNULL_ARGS(1,2);
   
 static inline bool_t
   terminal__cmd__detect(terminal__cmd_t *cmd, uint8_t c)
@@ -57,10 +57,14 @@ static inline terminal__cmd_t *
 
 /* Inline Function Definitions ---------------------------------------------- */
 
+/* Detect
+ *
+ * Returns true if a command was detected and a parser function is registered.
+ */
 bool_t
 terminal__cmd__detect(terminal__cmd_t *cmd, uint8_t c)
 {
-  return cmd->detector(cmd, c);
+  return cmd->detector(cmd, c) && (cmd->parser != NULL);
 }
 
 bool_t
