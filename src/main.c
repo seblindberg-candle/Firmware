@@ -10,13 +10,19 @@
 #include <util/delay.h>
 
 #include <util/terminal.h>
-#include <util/terminal/cmd.h>
 
 #include <drivers/mmc.h>
 #include <drivers/led.h>
 #include <drivers/usart.h>
-#include <flash_prgmr.h>
 #include <board.h>
+
+// #include <drivers/clock/device.h>
+#include <drivers/clock.h>
+#include <drivers/clock/alarm.h>
+
+#include <drivers/button.h>
+
+#include <programmer.h>
 
 /* Pin definitions –––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
@@ -26,79 +32,70 @@
 
 /* Functions –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
-bool_t
-detect_write_cmd(terminal__cmd_t *cmd, uint8_t c)
+void
+pulse_handler(void *ctx)
 {
-  if (c == 'W') {
-    return true;
-  }
+  clock__alarm_t *alarm = (clock__alarm_t *) ctx;
+  led__toggle(&board.status_led);
   
-  return false;
+  clock__set_alarm(alarm, 1000);
 }
 
-bool_t
-parse_write_cmd(terminal__cmd_t *cmd, uint8_t c)
+void
+button_handler(button_t *button)
 {
-  switch (c) {
-  default:
-    break;
+  struct power_button *power_button = (struct power_button *) button;
+  if (button__is_down(button)) {
+    if (power_button->active) {
+      clock__set_alarm(&power_button->timeout_alarm, 3000);
+    } else {
+      clock__set_alarm(&power_button->timeout_alarm, 1);
+    }
+    
+    terminal__puts(&board.terminal, "Down\n\r");
+  } else {
+    clock__cancel_alarm(&power_button->timeout_alarm);
+    terminal__puts(&board.terminal, "Up\n\r");
   }
+}
+
+void
+button_timeout_handler(void *ctx)
+{
+  clock__alarm_t *pulse_alarm = (clock__alarm_t *) ctx;
+  terminal__puts(&board.terminal, "Long hold\n\r");
   
-  return false;
+  if (board.power_button.active) {
+    clock__cancel_alarm(pulse_alarm);
+    led__off(&board.status_led);
+    led__off(&board.power_led);
+    board.power_button.active = false;
+  } else {
+    led__on(&board.power_led);
+    clock__set_alarm(pulse_alarm, 1000);
+    board.power_button.active = true;
+  }
 }
 
 int main(void)
 {
-  flash_prgmr_t flash_prgmr;
   board__init();
-  sei();
   
-  /* Verrify the chip */
-  if (mmc__verify(&board.mmc) != MMC__OK) {
-    terminal__puts(&board.terminal, "Failed to verrify MMC\n\r");
-  }
+  clock__init();
+  clock__alarm_t pulse_alarm;
+  clock__alarm__ctor(&pulse_alarm, pulse_handler, &pulse_alarm);
+  clock__set_alarm(&pulse_alarm, 1000);
   
-  // mmc__write(mmc, address, write_buffer, 512);
-  flash_prgmr__ctor(&flash_prgmr, &board.mmc);
-  
-  /* Prepare some data */
-  // uint8_t data[256];
-  // for (i = 0; i < sizeof(data); i ++) {
-  //   data[i] = (uint8_t) i;
-  // }
-  //
-  // while (mmc__program_page(&mmc, 0x000000, data, 256) != MMC__OK) {
-  //   puts("Failed to write");
-  //   _delay_ms(1000);
-  // }
-  
-  terminal__cmd_t write_cmd;
-  terminal__cmd__ctor(&write_cmd, detect_write_cmd, parse_write_cmd);
-  
-  terminal__add_cmd(&board.terminal, &write_cmd);
-  
-  uint8_t c;
-  
-  for (;;) {
-//     puts("Reading");
-//     if (mmc__read(&board.mmc, 0x000000, data, 256) != MMC__OK) {
-//       puts("Failed to read");
-//     }
-//
-//     puts("Done");
-//     counter ++;
-//
-// #ifndef NDEBUG
-//     for (counter = 0; counter < 255; counter ++) {
-//       printf("%02x ", data[counter]);
-//     }
-//
-//     printf("status = %02x\n", USARTC0.STATUS);
-// #endif
-//
-//     _delay_ms(1000);
+  clock__alarm__ctor(&board.power_button.timeout_alarm,
+                     button_timeout_handler, &pulse_alarm);
+  button__register_callback(&board.power_button._super, button_handler);
     
-    led__toggle(&board.status_led);
+  programmer__init();
+  
+  sei();
+
+  for (;;) {
+    clock__spin_once();
     terminal__spin_once(&board.terminal);
   }
 
@@ -108,6 +105,16 @@ int main(void)
 
 /* Interupts –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
+ISR(RTC_OVF_vect)
+{
+  clock__overflow_isr();
+}
+
+ISR(RTC_COMP_vect)
+{
+  clock__compare_isr();
+}
+
 ISR(USARTD0_RXC_vect)
 {
   terminal__rxc_isr(&board.terminal);
@@ -116,4 +123,9 @@ ISR(USARTD0_RXC_vect)
 ISR(USARTD0_DRE_vect)
 {
   terminal__dre_isr(&board.terminal);
+}
+
+ISR(PORTC_INT_vect)
+{
+  button__isr(&board.power_button._super);
 }
