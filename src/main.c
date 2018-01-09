@@ -6,21 +6,19 @@
 /* Includes ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 #include <compiler.h>
+
 #include <avr/interrupt.h>
 #include <util/delay.h>
-
 #include <util/terminal.h>
 
 #include <drivers/mmc.h>
 #include <drivers/led.h>
 #include <drivers/usart.h>
-#include <board.h>
-
-// #include <drivers/clock/device.h>
 #include <drivers/clock.h>
 #include <drivers/clock/alarm.h>
-
 #include <drivers/button.h>
+
+#include <board.h>
 
 #include <programmer.h>
 
