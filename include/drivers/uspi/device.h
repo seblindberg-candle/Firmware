@@ -63,6 +63,10 @@ void
 void
   uspi__device__read(USART_t *device, void *data, size_t data_len)
   NONNULL;
+  
+static inline void
+  uspi__device__wait_tx_ready(USART_t *device)
+  NONNULL;
 
 static inline uint8_t
   uspi__device__exchange(USART_t *device, uint8_t data)
@@ -74,6 +78,12 @@ static inline uint8_t
 
 
 /* Inline Function Definitions ---------------------------------------------- */
+
+void
+uspi__device__wait_tx_ready(USART_t *device)
+{
+  usart__device__wait_tx_ready(device);
+}
 
 uint8_t
 uspi__device__exchange(USART_t *device, uint8_t data)

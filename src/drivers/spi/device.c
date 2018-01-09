@@ -20,7 +20,7 @@ void
 spi__device__init(SPI_t *device, spi__device__baudctrl_t baudctrl,
                   spi__device__mode_t mode)
 {
-  
+  device->CTRL = SPI_ENABLE_bm;
 }
 
 void
@@ -34,4 +34,3 @@ spi__device__read(SPI_t *device, void *data, size_t data_len)
 {
   
 }
-

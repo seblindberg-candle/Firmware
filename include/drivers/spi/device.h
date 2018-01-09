@@ -50,10 +50,13 @@ void
   spi__device__read(SPI_t *device, void *data, size_t data_len)
   NONNULL;
 
+static inline void
+  spi__device__wait_tx_ready(SPI_t *device)
+  NONNULL;
+
 static inline uint8_t
   spi__device__exchange(SPI_t *device, uint8_t data)
   NONNULL;
-
 
 
 /* Macros ----------------------------------------+--------+----------------- */
@@ -63,10 +66,25 @@ static inline uint8_t
 
 /* Inline Function Definitions ---------------------------------------------- */
 
+void
+spi__device__wait_tx_ready(SPI_t *device)
+{
+  while ( !(device->STATUS & SPI_IF_bm) ) ;
+}
+
 uint8_t
 spi__device__exchange(SPI_t *device, uint8_t data)
 {
-  return 0;
+  uint8_t res;
+
+  device->DATA = data;
+
+  spi__device__wait_tx_ready(device);
+
+  /* Read received data. */
+  res = device->DATA;
+
+  return res;
 }
 
 #endif /* SPI_DEVICE_H */
